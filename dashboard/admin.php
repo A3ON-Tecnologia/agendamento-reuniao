@@ -44,6 +44,9 @@ $all_users = $user->getAllUsers();
                     <button onclick="showBookingModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg transition duration-200">
                         <i class="fas fa-plus mr-2"></i>Agendar Reunião
                     </button>
+                    <button onclick="showProfileModal()" class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg transition duration-200">
+                        <i class="fas fa-user mr-2"></i>Conta
+                    </button>
                     <a href="../auth/logout.php" class="text-gray-600 hover:text-gray-900 transition duration-200">
                         <i class="fas fa-sign-out-alt mr-2"></i>Sair
                     </a>
@@ -348,6 +351,61 @@ $all_users = $user->getAllUsers();
         </div>
     </div>
 
+    <!-- Profile Modal -->
+    <div id="profileModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden overflow-y-auto h-full w-full z-50">
+        <div class="relative top-20 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-1/2 shadow-lg rounded-md bg-white">
+            <div class="mt-3">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-medium text-gray-900">Conta</h3>
+                    <button onclick="hideProfileModal()" class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+                <form id="profileForm">
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Nome</label>
+                            <input type="text" id="name" name="name" required 
+                                   value="<?php echo htmlspecialchars($user_info['name']); ?>"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500">
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                            <input type="email" id="email" name="email" required 
+                                   value="<?php echo htmlspecialchars($user_info['email']); ?>"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500">
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Senha</label>
+                            <div class="relative">
+                                <input type="password" id="password" name="password" 
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500"
+                                       placeholder="Digite uma nova senha...">
+                                <button type="button" onclick="togglePasswordVisibility()" 
+                                        class="absolute right-3 top-3 text-gray-400 hover:text-gray-600">
+                                    <i id="passwordVisibilityIcon" class="fas fa-eye-slash text-xl"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-6 flex justify-end space-x-3">
+                        <button type="button" onclick="hideProfileModal()" 
+                                class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50">
+                            Cancelar
+                        </button>
+                        <button type="submit" 
+                                class="px-4 py-2 bg-indigo-600 border border-transparent rounded-md text-sm font-medium text-white hover:bg-indigo-700">
+                            Salvar Alterações
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <script>
         let selectedTimeSlot = null;
 
@@ -360,6 +418,15 @@ $all_users = $user->getAllUsers();
             document.getElementById('bookingForm').reset();
             document.getElementById('timeSlotsContainer').classList.add('hidden');
             selectedTimeSlot = null;
+        }
+
+        function showProfileModal() {
+            document.getElementById('profileModal').classList.remove('hidden');
+        }
+
+        function hideProfileModal() {
+            document.getElementById('profileModal').classList.add('hidden');
+            document.getElementById('profileForm').reset();
         }
 
         // Load available time slots when date or HR manager changes
@@ -419,6 +486,19 @@ $all_users = $user->getAllUsers();
             selectedTimeSlot = slot;
         }
 
+        function togglePasswordVisibility() {
+            const passwordInput = document.getElementById('password');
+            const passwordVisibilityIcon = document.getElementById('passwordVisibilityIcon');
+            
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                passwordVisibilityIcon.className = 'fas fa-eye text-xl';
+            } else {
+                passwordInput.type = 'password';
+                passwordVisibilityIcon.className = 'fas fa-eye-slash text-xl';
+            }
+        }
+
         // Event listeners
         document.getElementById('hrManager').addEventListener('change', loadTimeSlots);
         document.getElementById('appointmentDate').addEventListener('change', loadTimeSlots);
@@ -447,6 +527,27 @@ $all_users = $user->getAllUsers();
                     location.reload();
                 } else {
                     alert('Erro ao agendar reunião: ' + data.message);
+                }
+            });
+        });
+
+        // Handle profile form submission
+        document.getElementById('profileForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            
+            fetch('../api/update_profile.php', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Perfil atualizado com sucesso!');
+                    location.reload();
+                } else {
+                    alert('Erro ao atualizar perfil: ' + data.message);
                 }
             });
         });

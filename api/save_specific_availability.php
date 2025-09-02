@@ -18,10 +18,35 @@ $availability = new AvailabilitySlot($db);
 
 try {
     $specific_date = $_POST['specific_date'] ?? null;
-    $time_slots = $_POST['time_slots'] ?? [];
+    $time_slots_json = $_POST['time_slots'] ?? null;
+    
+    if (!$specific_date) {
+        throw new Exception('Data específica é obrigatória');
+    }
 
-    if (!$specific_date || empty($time_slots)) {
-        throw new Exception('Data específica e horários são obrigatórios');
+    // Parse time slots from JSON or form data
+    $time_slots = [];
+    if ($time_slots_json) {
+        $time_slots = json_decode($time_slots_json, true);
+    } else {
+        // Handle form data directly
+        $start_times = $_POST['start_time'] ?? [];
+        $end_times = $_POST['end_time'] ?? [];
+        $durations = $_POST['duration'] ?? [];
+        
+        for ($i = 0; $i < count($start_times); $i++) {
+            if (!empty($start_times[$i]) && !empty($end_times[$i])) {
+                $time_slots[] = [
+                    'start_time' => $start_times[$i],
+                    'end_time' => $end_times[$i],
+                    'duration' => $durations[$i] ?? 60
+                ];
+            }
+        }
+    }
+
+    if (empty($time_slots)) {
+        throw new Exception('Pelo menos um horário deve ser configurado');
     }
 
     // Delete existing availability for this date
@@ -36,7 +61,7 @@ try {
         $availability->slot_duration = $slot['duration'];
         $availability->is_active = 1;
 
-        if (!$availability->createSpecificAvailability()) {
+        if (!$availability->create()) {
             throw new Exception('Falha ao salvar horário específico');
         }
     }

@@ -50,6 +50,9 @@ $current_date = date('Y-m-d');
                     <button onclick="showBookingModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg transition duration-200">
                         <i class="fas fa-plus mr-2"></i>Nova Reunião
                     </button>
+                    <button onclick="showProfileModal()" class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg transition duration-200">
+                        <i class="fas fa-user mr-2"></i>Conta
+                    </button>
                     <a href="../auth/logout.php" class="text-gray-600 hover:text-gray-900 transition duration-200">
                         <i class="fas fa-sign-out-alt mr-2"></i>Sair
                     </a>
@@ -222,10 +225,25 @@ $current_date = date('Y-m-d');
                                                 'completed' => 'Concluída',
                                                 'cancelled' => 'Cancelada'
                                             ];
+                                            $is_future = strtotime($apt['appointment_date']) >= strtotime(date('Y-m-d'));
                                             ?>
-                                            <span class="px-2 py-1 text-xs font-semibold rounded-full <?php echo $status_classes[$apt['status']]; ?>">
-                                                <?php echo $status_labels[$apt['status']]; ?>
-                                            </span>
+                                            <div class="flex flex-col items-end space-y-2">
+                                                <span class="px-2 py-1 text-xs font-semibold rounded-full <?php echo $status_classes[$apt['status']]; ?>">
+                                                    <?php echo $status_labels[$apt['status']]; ?>
+                                                </span>
+                                                <?php if ($apt['status'] == 'scheduled' && $is_future): ?>
+                                                    <div class="flex space-x-1">
+                                                        <button onclick="editAppointment(<?php echo $apt['id']; ?>, '<?php echo $apt['appointment_date']; ?>', '<?php echo $apt['start_time']; ?>', '<?php echo $apt['end_time']; ?>', '<?php echo htmlspecialchars($apt['description'], ENT_QUOTES); ?>', <?php echo $apt['hr_manager_id']; ?>)" 
+                                                                class="text-blue-600 hover:text-blue-800 text-xs px-2 py-1 rounded border border-blue-300 hover:bg-blue-50">
+                                                            <i class="fas fa-edit mr-1"></i>Editar
+                                                        </button>
+                                                        <button onclick="deleteAppointment(<?php echo $apt['id']; ?>)" 
+                                                                class="text-red-600 hover:text-red-800 text-xs px-2 py-1 rounded border border-red-300 hover:bg-red-50">
+                                                            <i class="fas fa-trash mr-1"></i>Excluir
+                                                        </button>
+                                                    </div>
+                                                <?php endif; ?>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -296,6 +314,117 @@ $current_date = date('Y-m-d');
         </div>
     </div>
 
+    <!-- Edit Appointment Modal -->
+    <div id="editAppointmentModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden overflow-y-auto h-full w-full z-50">
+        <div class="relative top-20 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-1/2 shadow-lg rounded-md bg-white">
+            <div class="mt-3">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-medium text-gray-900">Editar Reunião</h3>
+                    <button onclick="hideEditAppointmentModal()" class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+                <form id="editAppointmentForm">
+                    <input type="hidden" id="editAppointmentId" name="appointment_id">
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Gestor de RH</label>
+                            <select id="editHrManagerId" name="hr_manager_id" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500">
+                                <option value="">Selecione um gestor</option>
+                                <?php foreach ($hr_managers as $hr): ?>
+                                    <option value="<?php echo $hr['id']; ?>"><?php echo htmlspecialchars($hr['name']); ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Data</label>
+                            <input type="date" id="editAppointmentDate" name="appointment_date" required 
+                                   min="<?php echo date('Y-m-d'); ?>"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500">
+                        </div>
+
+                        <div id="editTimeSlotsContainer" class="hidden">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Horários Disponíveis</label>
+                            <div id="editTimeSlots" class="grid grid-cols-2 md:grid-cols-3 gap-2">
+                                <!-- Time slots will be loaded here -->
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Descrição da Reunião</label>
+                            <textarea id="editDescription" name="description" rows="3" 
+                                      class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500"
+                                      placeholder="Descreva brevemente o motivo da reunião..."></textarea>
+                        </div>
+                    </div>
+
+                    <div class="mt-6 flex justify-end space-x-3">
+                        <button type="button" onclick="hideEditAppointmentModal()" 
+                                class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50">
+                            Cancelar
+                        </button>
+                        <button type="submit" 
+                                class="px-4 py-2 bg-indigo-600 border border-transparent rounded-md text-sm font-medium text-white hover:bg-indigo-700">
+                            Salvar Alterações
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Profile Modal -->
+    <div id="profileModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden overflow-y-auto h-full w-full z-50">
+        <div class="relative top-20 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-1/2 shadow-lg rounded-md bg-white">
+            <div class="mt-3">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-medium text-gray-900">Editar Conta</h3>
+                    <button onclick="hideProfileModal()" class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+                <form id="profileForm">
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Nome</label>
+                            <input type="text" id="name" name="name" value="<?php echo htmlspecialchars($user_info['name']); ?>" required 
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500">
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">E-mail</label>
+                            <input type="email" id="email" name="email" value="<?php echo htmlspecialchars($user_info['email']); ?>" required 
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500">
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Senha</label>
+                            <div class="relative">
+                                <input type="password" id="password" name="password" 
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500">
+                                <button type="button" class="absolute right-0 top-0 mt-2 mr-2 text-gray-400 hover:text-gray-600">
+                                    <i id="passwordToggle" class="fas fa-eye"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-6 flex justify-end space-x-3">
+                        <button type="button" onclick="hideProfileModal()" 
+                                class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50">
+                            Cancelar
+                        </button>
+                        <button type="submit" 
+                                class="px-4 py-2 bg-indigo-600 border border-transparent rounded-md text-sm font-medium text-white hover:bg-indigo-700">
+                            Salvar Alterações
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <script>
         let currentDate = new Date();
         let selectedTimeSlot = null;
@@ -310,6 +439,15 @@ $current_date = date('Y-m-d');
             document.getElementById('bookingForm').reset();
             document.getElementById('timeSlotsContainer').classList.add('hidden');
             selectedTimeSlot = null;
+        }
+
+        function showProfileModal() {
+            document.getElementById('profileModal').classList.remove('hidden');
+        }
+
+        function hideProfileModal() {
+            document.getElementById('profileModal').classList.add('hidden');
+            document.getElementById('profileForm').reset();
         }
 
         // Load available days for the current month
@@ -524,6 +662,205 @@ $current_date = date('Y-m-d');
                     location.reload();
                 } else {
                     alert('Erro ao agendar reunião: ' + data.message);
+                }
+            });
+        });
+
+        // Handle profile form submission
+        document.getElementById('profileForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            
+            fetch('../api/update_profile.php', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Perfil atualizado com sucesso!');
+                    location.reload();
+                } else {
+                    alert('Erro ao atualizar perfil: ' + data.message);
+                }
+            });
+        });
+
+        // Password toggle
+        document.getElementById('passwordToggle').addEventListener('click', function() {
+            const passwordInput = document.getElementById('password');
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                this.classList.remove('fa-eye');
+                this.classList.add('fa-eye-slash');
+            } else {
+                passwordInput.type = 'password';
+                this.classList.remove('fa-eye-slash');
+                this.classList.add('fa-eye');
+            }
+        });
+
+        function showEditAppointmentModal(appointmentId) {
+            fetch('../api/get_appointment.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    appointment_id: appointmentId
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const appointment = data.appointment;
+                    document.getElementById('editAppointmentId').value = appointment.id;
+                    document.getElementById('editHrManagerId').value = appointment.hr_manager_id;
+                    document.getElementById('editAppointmentDate').value = appointment.appointment_date;
+                    document.getElementById('editDescription').value = appointment.description;
+                    document.getElementById('editAppointmentModal').classList.remove('hidden');
+                } else {
+                    alert('Erro ao carregar reunião: ' + data.message);
+                }
+            });
+        }
+
+        function hideEditAppointmentModal() {
+            document.getElementById('editAppointmentModal').classList.add('hidden');
+            document.getElementById('editAppointmentForm').reset();
+            document.getElementById('editTimeSlotsContainer').classList.add('hidden');
+            selectedEditTimeSlot = null;
+        }
+
+        function editAppointment(id, date, startTime, endTime, description, hrManagerId) {
+            console.log('Edit appointment called with:', {id, date, startTime, endTime, description, hrManagerId});
+            
+            document.getElementById('editAppointmentId').value = id;
+            document.getElementById('editHrManagerId').value = hrManagerId;
+            document.getElementById('editAppointmentDate').value = date;
+            document.getElementById('editDescription').value = description;
+            document.getElementById('editAppointmentModal').classList.remove('hidden');
+            
+            // Load available time slots for the selected date
+            loadEditTimeSlots();
+        }
+
+        function deleteAppointment(appointmentId) {
+            console.log('Delete appointment called with ID:', appointmentId);
+            
+            if (confirm('Tem certeza que deseja excluir esta reunião?')) {
+                fetch('../api/delete_appointment.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        appointment_id: appointmentId
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    console.log('Delete response:', data);
+                    if (data.success) {
+                        alert('Reunião excluída com sucesso!');
+                        location.reload();
+                    } else {
+                        alert('Erro ao excluir reunião: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Delete error:', error);
+                    alert('Erro ao excluir reunião. Tente novamente.');
+                });
+            }
+        }
+
+        let selectedEditTimeSlot = null;
+
+        function loadEditTimeSlots() {
+            const hrManagerId = document.getElementById('editHrManagerId').value;
+            const appointmentDate = document.getElementById('editAppointmentDate').value;
+            
+            if (!hrManagerId || !appointmentDate) {
+                document.getElementById('editTimeSlotsContainer').classList.add('hidden');
+                return;
+            }
+            
+            fetch('../api/get_available_slots.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    hr_manager_id: hrManagerId,
+                    date: appointmentDate
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                const timeSlotsContainer = document.getElementById('editTimeSlotsContainer');
+                const timeSlots = document.getElementById('editTimeSlots');
+                
+                if (data.success && data.slots.length > 0) {
+                    timeSlots.innerHTML = '';
+                    data.slots.forEach(slot => {
+                        const slotButton = document.createElement('button');
+                        slotButton.type = 'button';
+                        slotButton.className = 'p-2 border border-gray-300 rounded-md text-sm hover:bg-indigo-50 hover:border-indigo-300 transition duration-200';
+                        slotButton.textContent = slot.display_time;
+                        slotButton.onclick = () => selectEditTimeSlot(slotButton, slot);
+                        timeSlots.appendChild(slotButton);
+                    });
+                    timeSlotsContainer.classList.remove('hidden');
+                } else {
+                    timeSlots.innerHTML = '<p class="text-gray-500 text-sm col-span-full text-center py-4">Nenhum horário disponível para esta data.</p>';
+                    timeSlotsContainer.classList.remove('hidden');
+                }
+            });
+        }
+
+        function selectEditTimeSlot(button, slot) {
+            // Remove selection from other buttons
+            document.querySelectorAll('#editTimeSlots button').forEach(btn => {
+                btn.classList.remove('bg-indigo-600', 'text-white');
+                btn.classList.add('border-gray-300');
+            });
+            
+            // Select this button
+            button.classList.add('bg-indigo-600', 'text-white');
+            button.classList.remove('border-gray-300');
+            
+            selectedEditTimeSlot = slot;
+        }
+
+        // Event listener for edit appointment date change
+        document.getElementById('editAppointmentDate').addEventListener('change', loadEditTimeSlots);
+
+        // Handle edit appointment form submission
+        document.getElementById('editAppointmentForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            if (!selectedEditTimeSlot) {
+                alert('Por favor, selecione um horário.');
+                return;
+            }
+            
+            const formData = new FormData(this);
+            formData.append('start_time', selectedEditTimeSlot.start_time);
+            formData.append('end_time', selectedEditTimeSlot.end_time);
+            
+            fetch('../api/edit_appointment.php', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Reunião atualizada com sucesso!');
+                    location.reload();
+                } else {
+                    alert('Erro ao atualizar reunião: ' + data.message);
                 }
             });
         });

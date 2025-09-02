@@ -34,11 +34,21 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 </head>
-<body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen flex items-center justify-center">
+<body class="bg-gradient-to-br from-orange-500 to-blue-900 min-h-screen flex items-center justify-center">
     <div class="max-w-md w-full space-y-8 p-8">
+        <!-- Beautiful Back Button -->
+        <div class="text-left">
+            <a href="../index.php" class="group relative inline-flex items-center px-6 py-3 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full text-white font-medium shadow-lg hover:shadow-xl hover:bg-white/20 transform hover:scale-105 transition-all duration-300 ease-out">
+                <div class="absolute inset-0 bg-gradient-to-r from-orange-400/20 to-blue-600/20 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                <i class="fas fa-arrow-left mr-3 text-lg group-hover:animate-pulse"></i>
+                <span class="relative z-10">Voltar ao Início</span>
+                <div class="absolute -inset-1 bg-gradient-to-r from-orange-400 to-blue-600 rounded-full opacity-20 group-hover:opacity-40 blur transition-all duration-300"></div>
+            </a>
+        </div>
+        
         <div class="bg-white rounded-2xl shadow-xl p-8">
             <div class="text-center">
-                <div class="mx-auto h-12 w-12 bg-indigo-600 rounded-full flex items-center justify-center mb-4">
+                <div class="mx-auto h-16 w-16 bg-blue-900 rounded-full flex items-center justify-center mb-4">
                     <i class="fas fa-user-plus text-white text-xl"></i>
                 </div>
                 <h2 class="text-3xl font-bold text-gray-900 mb-2">Criar Conta</h2>

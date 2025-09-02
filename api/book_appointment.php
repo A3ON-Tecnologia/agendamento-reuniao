@@ -4,7 +4,7 @@ require_once '../includes/auth_check.php';
 require_once '../config/database.php';
 require_once '../classes/Appointment.php';
 
-checkAuth();
+checkRoles(['common_user', 'admin']);
 $user_info = getUserInfo();
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
