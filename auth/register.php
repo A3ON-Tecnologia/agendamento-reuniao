@@ -31,7 +31,21 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Registro - Sistema de Agendamentos</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        'sans': ['Inter', 'ui-sans-serif', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'Helvetica Neue', 'Arial', 'Noto Sans', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 </head>
 <body class="bg-gradient-to-br from-orange-500 to-blue-900 min-h-screen flex items-center justify-center">
@@ -48,8 +62,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         
         <div class="bg-white rounded-2xl shadow-xl p-8">
             <div class="text-center">
-                <div class="mx-auto h-16 w-16 bg-blue-900 rounded-full flex items-center justify-center mb-4">
-                    <i class="fas fa-user-plus text-white text-xl"></i>
+                <div class="mx-auto h-16 w-16 bg-gradient-to-r from-orange-500 to-blue-900 rounded-lg flex items-center justify-center mb-4">
+                    <i class="fas fa-calendar-alt text-white text-2xl"></i>
                 </div>
                 <h2 class="text-3xl font-bold text-gray-900 mb-2">Criar Conta</h2>
                 <p class="text-gray-600">Registre-se no sistema de agendamentos</p>
@@ -92,18 +106,30 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                     <label for="password" class="block text-sm font-medium text-gray-700 mb-2">
                         <i class="fas fa-lock mr-2"></i>Senha
                     </label>
-                    <input id="password" name="password" type="password" required 
-                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200"
-                           placeholder="••••••••">
+                    <div class="relative">
+                        <input id="password" name="password" type="password" required 
+                               class="w-full px-4 py-3 pr-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200"
+                               placeholder="••••••••">
+                        <button type="button" onclick="togglePasswordVisibility('password')" 
+                                class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition duration-200">
+                            <i id="passwordIcon" class="fas fa-eye"></i>
+                        </button>
+                    </div>
                 </div>
 
                 <div>
                     <label for="confirm_password" class="block text-sm font-medium text-gray-700 mb-2">
                         <i class="fas fa-lock mr-2"></i>Confirmar Senha
                     </label>
-                    <input id="confirm_password" name="confirm_password" type="password" required 
-                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200"
-                           placeholder="••••••••">
+                    <div class="relative">
+                        <input id="confirm_password" name="confirm_password" type="password" required 
+                               class="w-full px-4 py-3 pr-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200"
+                               placeholder="••••••••">
+                        <button type="button" onclick="togglePasswordVisibility('confirm_password')" 
+                                class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition duration-200">
+                            <i id="confirm_passwordIcon" class="fas fa-eye"></i>
+                        </button>
+                    </div>
                 </div>
 
                 <button type="submit" 
@@ -122,5 +148,20 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             </div>
         </div>
     </div>
+
+    <script>
+        function togglePasswordVisibility(fieldId) {
+            const passwordField = document.getElementById(fieldId);
+            const passwordIcon = document.getElementById(fieldId + 'Icon');
+            
+            if (passwordField.type === 'password') {
+                passwordField.type = 'text';
+                passwordIcon.className = 'fas fa-eye-slash';
+            } else {
+                passwordField.type = 'password';
+                passwordIcon.className = 'fas fa-eye';
+            }
+        }
+    </script>
 </body>
 </html>

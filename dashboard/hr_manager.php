@@ -34,7 +34,21 @@ $days_of_week = [
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard RH - Sistema de Agendamentos</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        'sans': ['Inter', 'ui-sans-serif', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'Helvetica Neue', 'Arial', 'Noto Sans', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 </head>
 <body class="bg-gray-50 min-h-screen">
@@ -47,7 +61,7 @@ $days_of_week = [
                         <i class="fas fa-calendar-alt text-indigo-600 text-2xl"></i>
                     </div>
                     <div class="ml-4">
-                        <h1 class="text-xl font-semibold text-gray-900">Dashboard RH</h1>
+                        <h1 class="text-xl font-semibold text-gray-900">Dashboard Gestor</h1>
                         <p class="text-sm text-gray-600">Bem-vindo, <?php echo htmlspecialchars($user_info['name']); ?></p>
                     </div>
                 </div>
@@ -517,6 +531,13 @@ $days_of_week = [
 
         function deleteSpecificDate(date) {
             if (confirm('Tem certeza que deseja remover os horários desta data?')) {
+                // Disable the button to prevent multiple clicks
+                const deleteButton = event.target.closest('button');
+                if (deleteButton) {
+                    deleteButton.disabled = true;
+                    deleteButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+                }
+
                 fetch('../api/delete_specific_availability.php', {
                     method: 'POST',
                     headers: {
@@ -531,16 +552,27 @@ $days_of_week = [
                         loadSpecificAvailability();
                     } else {
                         alert('Erro ao remover horários: ' + data.message);
+                        // Re-enable button on error
+                        if (deleteButton) {
+                            deleteButton.disabled = false;
+                            deleteButton.innerHTML = '<i class="fas fa-trash"></i>';
+                        }
                     }
                 })
                 .catch(error => {
                     console.error('Error:', error);
                     alert('Erro ao remover horários. Tente novamente.');
+                    // Re-enable button on error
+                    if (deleteButton) {
+                        deleteButton.disabled = false;
+                        deleteButton.innerHTML = '<i class="fas fa-trash"></i>';
+                    }
                 });
             }
         }
 
         function loadSpecificAvailability() {
+            console.log('Loading specific availability...');
             fetch('../api/get_specific_availability.php')
                 .then(response => response.json())
                 .then(data => {
@@ -573,7 +605,7 @@ $days_of_week = [
                                             <button onclick="editSpecificDate('${date}')" class="text-blue-600 hover:text-blue-800 text-sm" title="Editar">
                                                 <i class="fas fa-edit"></i>
                                             </button>
-                                            <button onclick="deleteSpecificDate('${date}')" class="text-red-600 hover:text-red-800 text-sm" title="Excluir">
+                                            <button onclick="confirmDeleteDate('${date}')" class="text-red-600 hover:text-red-800 text-sm" title="Excluir">
                                                 <i class="fas fa-trash"></i>
                                             </button>
                                         </div>
@@ -598,6 +630,7 @@ $days_of_week = [
                         });
                         html += '</div>';
                         container.innerHTML = html;
+                        console.log('Availability loaded successfully with onclick handlers');
                     } else {
                         console.log('No availability data found or empty array'); // Debug log
                         container.innerHTML = `
@@ -624,6 +657,38 @@ $days_of_week = [
                         </div>
                     `;
                 });
+        }
+
+        // Simple onclick delete function
+        function confirmDeleteDate(date) {
+            console.log('confirmDeleteDate called with date:', date);
+            if (confirm('Tem certeza que deseja remover os horários desta data?')) {
+                console.log('User confirmed deletion for date:', date);
+                
+                fetch('../api/delete_specific_availability.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ specific_date: date })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    console.log('Delete response:', data);
+                    if (data.success) {
+                        alert('Horários removidos com sucesso!');
+                        loadSpecificAvailability();
+                    } else {
+                        alert('Erro ao remover horários: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Erro ao remover horários. Tente novamente.');
+                });
+            } else {
+                console.log('User cancelled deletion for date:', date);
+            }
         }
 
         function getDayOfWeek(dateString) {
@@ -723,8 +788,45 @@ $days_of_week = [
 
         // Load specific availability on page load
         document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM loaded, starting initialization...');
             loadSpecificAvailability();
         });
+
+        // New delegated delete function to handle event properly
+        function deleteSpecificDateDelegated(date, button) {
+            if (confirm('Tem certeza que deseja remover os horários desta data?')) {
+                // Disable the button to prevent multiple clicks
+                button.disabled = true;
+                button.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+
+                fetch('../api/delete_specific_availability.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ specific_date: date })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('Horários removidos com sucesso!');
+                        loadSpecificAvailability();
+                    } else {
+                        alert('Erro ao remover horários: ' + data.message);
+                        // Re-enable button on error
+                        button.disabled = false;
+                        button.innerHTML = '<i class="fas fa-trash"></i>';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Erro ao remover horários. Tente novamente.');
+                    // Re-enable button on error
+                    button.disabled = false;
+                    button.innerHTML = '<i class="fas fa-trash"></i>';
+                });
+            }
+        }
 
         function showProfileModal() {
             document.getElementById('profileModal').classList.remove('hidden');
