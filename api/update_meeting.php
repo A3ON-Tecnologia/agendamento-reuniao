@@ -7,6 +7,7 @@ header('Access-Control-Allow-Headers: Content-Type');
 require_once '../config/users_database.php';
 require_once '../classes/Meeting.php';
 
+// Verificar se é uma requisição POST
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
     echo json_encode(['success' => false, 'message' => 'Método não permitido']);
@@ -17,7 +18,7 @@ try {
     $input = json_decode(file_get_contents('php://input'), true);
     
     // Validar dados obrigatórios
-    $required_fields = ['date', 'start_time', 'end_time', 'subject'];
+    $required_fields = ['meeting_id', 'date', 'start_time', 'end_time', 'subject'];
     foreach ($required_fields as $field) {
         if (empty($input[$field])) {
             throw new Exception("Campo obrigatório: $field");
@@ -29,31 +30,32 @@ try {
     $db = $usersDb->getConnection();
     $meeting = new Meeting($db);
     
-    // Criar reunião
-    $meeting_id = $meeting->createMeeting(
+    // Atualizar reunião
+    $success = $meeting->updateMeeting(
+        $input['meeting_id'],
         $input['date'],
         $input['start_time'],
         $input['end_time'],
         $input['subject'],
         $input['description'] ?? '',
+        $input['status'] ?? 'agendada',
         $input['participants'] ?? []
     );
     
-    echo json_encode([
-        'success' => true,
-        'message' => 'Reunião criada com sucesso',
-        'meeting_id' => $meeting_id
-    ]);
+    if ($success) {
+        echo json_encode([
+            'success' => true,
+            'message' => 'Reunião atualizada com sucesso!'
+        ]);
+    } else {
+        throw new Exception('Falha ao atualizar reunião');
+    }
     
 } catch (Exception $e) {
-    // Log detalhado do erro para debug
-    error_log("ERRO CREATE_MEETING: " . $e->getMessage());
-    error_log("INPUT RECEBIDO: " . json_encode($input));
-    
-    http_response_code(400);
+    http_response_code(500);
     echo json_encode([
         'success' => false,
-        'message' => 'Erro ao criar reunião: ' . $e->getMessage()
+        'message' => 'Erro ao atualizar reunião: ' . $e->getMessage()
     ]);
 }
 ?>

@@ -107,6 +107,119 @@ $days_of_week = [
 
     </div>
 
+    <!-- Meeting Details/Edit Modal -->
+    <div id="meetingDetailsModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden overflow-y-auto h-full w-full z-50 flex items-center justify-center">
+        <div class="relative mx-auto p-5 border w-11/12 md:w-3/4 lg:w-1/2 shadow-lg rounded-md bg-white max-h-[90vh] overflow-y-auto">
+            <div class="mt-3">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-medium text-gray-900">Detalhes da Reunião</h3>
+                    <button onclick="hideMeetingDetailsModal()" class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+                <form id="editMeetingForm">
+                    <input type="hidden" id="editMeetingId" name="meeting_id">
+                    <div class="space-y-4">
+                        <!-- Data -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Data da Reunião</label>
+                            <input type="date" id="editMeetingDate" name="date" required 
+                                   class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        </div>
+
+                        <!-- Horários -->
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Hora de Início</label>
+                                <input type="time" id="editMeetingStartTime" name="start_time" required 
+                                       class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Hora de Fim</label>
+                                <input type="time" id="editMeetingEndTime" name="end_time" required 
+                                       class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                            </div>
+                        </div>
+
+                        <!-- Assunto -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Assunto da Reunião</label>
+                            <input type="text" id="editMeetingSubject" name="subject" required 
+                                   class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                   placeholder="Digite o assunto da reunião">
+                        </div>
+
+                        <!-- Descrição -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Descrição (Opcional)</label>
+                            <textarea id="editMeetingDescription" name="description" rows="3"
+                                      class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                      placeholder="Descrição adicional da reunião"></textarea>
+                        </div>
+
+                        <!-- Participantes -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Participantes</label>
+                            <div class="relative">
+                                <div id="editParticipantsInput" 
+                                     class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white cursor-pointer min-h-[42px] flex flex-wrap items-center gap-1"
+                                     onclick="toggleEditParticipantsDropdown()">
+                                    <span id="editParticipantsPlaceholder" class="text-gray-500">Clique para selecionar participantes...</span>
+                                    <div id="editSelectedParticipants" class="flex flex-wrap gap-1"></div>
+                                    <i class="fas fa-chevron-down ml-auto text-gray-400" id="editDropdownIcon"></i>
+                                </div>
+                                
+                                <div id="editParticipantsDropdown" 
+                                     class="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-y-auto hidden">
+                                    <div class="p-2 border-b border-gray-200">
+                                        <input type="text" 
+                                               id="editParticipantsSearch" 
+                                               placeholder="Buscar usuários..." 
+                                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
+                                               onclick="event.stopPropagation()"
+                                               oninput="filterEditParticipants()">
+                                    </div>
+                                    <div id="editParticipantsList" class="py-1">
+                                        <div class="px-3 py-2 text-gray-500 text-sm">Carregando usuários...</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Status -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Status</label>
+                            <select id="editMeetingStatus" name="status" 
+                                    class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                                <option value="agendada">Agendada</option>
+                                <option value="em_andamento">Em Andamento</option>
+                                <option value="concluida">Concluída</option>
+                                <option value="cancelada">Cancelada</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="flex justify-between mt-6">
+                        <button type="button" onclick="deleteMeeting()" 
+                                class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition duration-200">
+                            <i class="fas fa-trash mr-2"></i>Excluir Reunião
+                        </button>
+                        <div class="space-x-2">
+                            <button type="button" onclick="hideMeetingDetailsModal()" 
+                                    class="bg-gray-300 hover:bg-gray-400 text-gray-700 px-4 py-2 rounded-lg transition duration-200">
+                                Cancelar
+                            </button>
+                            <button type="submit" 
+                                    class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg transition duration-200">
+                                <i class="fas fa-save mr-2"></i>Salvar Alterações
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <!-- Meeting Scheduling Modal -->
     <div id="specificDateModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden overflow-y-auto h-full w-full z-50 flex items-center justify-center">
         <div class="relative mx-auto p-5 border w-11/12 md:w-3/4 lg:w-1/2 shadow-lg rounded-md bg-white max-h-[90vh] overflow-y-auto">
@@ -181,6 +294,14 @@ $days_of_week = [
                             <textarea id="meetingSubject" name="meeting_subject" required rows="3"
                                       placeholder="Digite o assunto da reunião..."
                                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500 resize-none"></textarea>
+                        </div>
+
+                        <!-- Error message container -->
+                        <div id="meetingErrorMessage" class="hidden mt-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg">
+                            <div class="flex items-center">
+                                <i class="fas fa-exclamation-triangle mr-2"></i>
+                                <span id="meetingErrorText"></span>
+                            </div>
                         </div>
 
                         <div class="flex justify-end space-x-3 pt-4">
@@ -323,7 +444,90 @@ $days_of_week = [
         </div>
     </div>
 
+    <!-- Toast Notification Container -->
+    <div id="toastContainer" class="fixed top-4 right-4 z-50 space-y-2">
+        <!-- Toast notifications will be inserted here -->
+    </div>
+
     <script>
+        // Toast notification system
+        function showToast(message, type = 'success') {
+            const toastContainer = document.getElementById('toastContainer');
+            
+            // Create toast element
+            const toast = document.createElement('div');
+            toast.className = `
+                transform transition-all duration-300 ease-in-out translate-x-full opacity-0
+                max-w-sm w-full bg-white shadow-lg rounded-lg pointer-events-auto flex ring-1 ring-black ring-opacity-5
+            `;
+            
+            // Set colors based on type
+            let iconClass, bgClass, textClass;
+            switch(type) {
+                case 'success':
+                    iconClass = 'fas fa-check-circle text-green-400';
+                    bgClass = 'bg-green-50';
+                    textClass = 'text-green-800';
+                    break;
+                case 'error':
+                    iconClass = 'fas fa-exclamation-circle text-red-400';
+                    bgClass = 'bg-red-50';
+                    textClass = 'text-red-800';
+                    break;
+                case 'warning':
+                    iconClass = 'fas fa-exclamation-triangle text-yellow-400';
+                    bgClass = 'bg-yellow-50';
+                    textClass = 'text-yellow-800';
+                    break;
+                default:
+                    iconClass = 'fas fa-info-circle text-blue-400';
+                    bgClass = 'bg-blue-50';
+                    textClass = 'text-blue-800';
+            }
+            
+            toast.innerHTML = `
+                <div class="flex-1 w-0 p-4">
+                    <div class="flex items-start">
+                        <div class="flex-shrink-0">
+                            <i class="${iconClass}"></i>
+                        </div>
+                        <div class="ml-3 w-0 flex-1 pt-0.5">
+                            <p class="text-sm font-medium ${textClass}">${message}</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="flex border-l border-gray-200">
+                    <button onclick="removeToast(this.parentElement.parentElement)" 
+                            class="w-full border border-transparent rounded-none rounded-r-lg p-4 flex items-center justify-center text-sm font-medium text-gray-600 hover:text-gray-500 focus:outline-none">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            `;
+            
+            // Add to container
+            toastContainer.appendChild(toast);
+            
+            // Animate in
+            setTimeout(() => {
+                toast.classList.remove('translate-x-full', 'opacity-0');
+                toast.classList.add('translate-x-0', 'opacity-100');
+            }, 100);
+            
+            // Auto remove after 3 seconds
+            setTimeout(() => {
+                removeToast(toast);
+            }, 3000);
+        }
+        
+        function removeToast(toast) {
+            toast.classList.add('translate-x-full', 'opacity-0');
+            setTimeout(() => {
+                if (toast.parentElement) {
+                    toast.parentElement.removeChild(toast);
+                }
+            }, 300);
+        }
+
         function showAvailabilityModal() {
             document.getElementById('availabilityModal').classList.remove('hidden');
         }
@@ -349,7 +553,7 @@ $days_of_week = [
                     if (data.success) {
                         location.reload();
                     } else {
-                        alert('Erro ao atualizar status da reunião');
+                        showToast('Erro ao atualizar status da reunião', 'error');
                     }
                 });
             }
@@ -460,15 +664,15 @@ $days_of_week = [
                 .then(data => {
                     console.log('Delete response:', data);
                     if (data.success) {
-                        alert('Horários removidos com sucesso!');
+                        showToast('Horários removidos com sucesso!', 'success');
                         loadSpecificAvailability();
                     } else {
-                        alert('Erro ao remover horários: ' + data.message);
+                        showToast('Erro ao remover horários: ' + data.message, 'error');
                     }
                 })
                 .catch(error => {
                     console.error('Error:', error);
-                    alert('Erro ao remover horários. Tente novamente.');
+                    showToast('Erro ao remover horários. Tente novamente.', 'error');
                 });
             } else {
                 console.log('User cancelled deletion for date:', date);
@@ -504,7 +708,7 @@ $days_of_week = [
                 if (data.success) {
                     location.reload();
                 } else {
-                    alert('Erro ao salvar configurações');
+                    showToast('Erro ao salvar configurações', 'error');
                 }
             });
         });
@@ -517,7 +721,7 @@ $days_of_week = [
             
             // Check if participants are selected
             if (selectedParticipants.length === 0) {
-                alert('Por favor, selecione pelo menos um participante para a reunião.');
+                showToast('Por favor, selecione pelo menos um participante para a reunião.', 'warning');
                 return;
             }
             
@@ -529,7 +733,21 @@ $days_of_week = [
             
             // Validate time range
             if (meetingStartTime >= meetingEndTime) {
-                alert('A hora de início deve ser anterior à hora de fim.');
+                showMeetingError('A hora de início deve ser anterior à hora de fim.');
+                return;
+            }
+
+            // Validate if meeting is not in the past
+            const meetingDateTime = new Date(meetingDate + 'T' + meetingStartTime);
+            const currentDateTime = new Date();
+            
+            if (meetingDateTime < currentDateTime) {
+                const currentDateStr = currentDateTime.toLocaleDateString('pt-BR');
+                const currentTimeStr = currentDateTime.toLocaleTimeString('pt-BR', {hour: '2-digit', minute: '2-digit'});
+                const meetingDateStr = meetingDateTime.toLocaleDateString('pt-BR');
+                const meetingTimeStr = meetingDateTime.toLocaleTimeString('pt-BR', {hour: '2-digit', minute: '2-digit'});
+                
+                showMeetingError(`Não é possível agendar reunião no passado!\nData/Hora atual: ${currentDateStr} ${currentTimeStr}\nData/Hora da reunião: ${meetingDateStr} ${meetingTimeStr}`);
                 return;
             }
             
@@ -554,22 +772,21 @@ $days_of_week = [
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    const participantNames = selectedParticipants.map(p => p.username).join(', ');
-                    alert(`Reunião criada com sucesso!\nData: ${meetingDate}\nHorário: ${meetingStartTime} - ${meetingEndTime}\nAssunto: ${meetingSubject}\nParticipantes: ${participantNames}\nID da Reunião: ${data.meeting_id}`);
-                    
                     hideSpecificDateModal();
                     // Clear form and reset participants
                     document.getElementById('meetingForm').reset();
                     selectedParticipants = [];
                     updateSelectedParticipantsDisplay();
                     closeParticipantsDropdown();
+                    reloadMeetingsOnCalendar();
+                    showToast('Reunião criada com sucesso!', 'success');
                 } else {
-                    alert('Erro ao criar reunião: ' + data.message);
+                    showToast('Erro ao criar reunião: ' + data.message, 'error');
                 }
             })
             .catch(error => {
                 console.error('Error:', error);
-                alert('Erro ao conectar com o servidor. Tente novamente.');
+                showToast('Erro ao conectar com o servidor. Tente novamente.', 'error');
             });
         });
 
@@ -809,9 +1026,11 @@ $days_of_week = [
                 `;
                 
                 dayElement.innerHTML = `
-                    <div class="font-medium text-sm mb-1">${day}</div>
-                    <div class="space-y-1" id="events-${date.getFullYear()}-${date.getMonth()}-${date.getDate()}">
-                        <!-- Events will be loaded here -->
+                    <div class="flex items-center justify-between mb-1">
+                        <div class="font-medium text-sm">${day}</div>
+                        <div class="flex space-x-1" id="events-${date.getFullYear()}-${date.getMonth()}-${date.getDate()}">
+                            <!-- Events will be loaded here -->
+                        </div>
                     </div>
                 `;
                 
@@ -842,8 +1061,361 @@ $days_of_week = [
         }
 
         function loadMonthAppointments(year, month) {
-            // Calendar is now clean - no sample events
-            // Real appointments would be loaded from server here
+            console.log('Loading meetings for month:', year, month);
+            // Load meetings from database
+            fetch('../api/get_meetings.php')
+                .then(response => {
+                    console.log('Response status:', response.status);
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('Meetings data received:', data);
+                    if (data.success && data.meetings) {
+                        console.log('Number of meetings found:', data.meetings.length);
+                        displayMeetingsOnCalendar(data.meetings);
+                    } else {
+                        console.log('No meetings found or API error');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading meetings:', error);
+                });
+        }
+
+        function getMeetingStatus(meeting) {
+            const now = new Date();
+            const meetingDate = new Date(meeting.data_reuniao + 'T' + meeting.hora_inicio);
+            const meetingEndDate = new Date(meeting.data_reuniao + 'T' + meeting.hora_fim);
+            const fiveMinutesAfterEnd = new Date(meetingEndDate.getTime() + 5 * 60 * 1000);
+            
+            if (now >= meetingDate && now <= meetingEndDate) {
+                return 'happening'; // Verde - acontecendo agora
+            } else if (now > fiveMinutesAfterEnd) {
+                return 'past'; // Vermelho - já aconteceu (5+ min após o fim)
+            } else {
+                return 'future'; // Laranja - futuro
+            }
+        }
+
+        function displayMeetingsOnCalendar(meetings) {
+            console.log('Displaying meetings on calendar:', meetings);
+            // Clear existing events
+            document.querySelectorAll('[id^="events-"]').forEach(container => {
+                container.innerHTML = '';
+            });
+
+            meetings.forEach(meeting => {
+                console.log('Processing meeting:', meeting);
+                const meetingDate = new Date(meeting.data_reuniao + 'T00:00:00');
+                console.log('Meeting date object:', meetingDate);
+                const eventId = `events-${meetingDate.getFullYear()}-${meetingDate.getMonth()}-${meetingDate.getDate()}`;
+                console.log('Looking for container with ID:', eventId);
+                const eventContainer = document.getElementById(eventId);
+                
+                if (eventContainer) {
+                    console.log('Container found, adding event');
+                    
+                    // Determine meeting status and color
+                    const status = getMeetingStatus(meeting);
+                    let dotColor, hoverColor;
+                    
+                    switch(status) {
+                        case 'happening':
+                            dotColor = 'bg-green-500';
+                            hoverColor = 'hover:bg-green-600';
+                            break;
+                        case 'past':
+                            dotColor = 'bg-red-500';
+                            hoverColor = 'hover:bg-red-600';
+                            break;
+                        default: // future
+                            dotColor = 'bg-orange-500';
+                            hoverColor = 'hover:bg-orange-600';
+                    }
+                    
+                    const eventElement = document.createElement('div');
+                    eventElement.className = `w-6 h-6 ${dotColor} ${hoverColor} rounded-full cursor-pointer transition-colors`;
+                    eventElement.title = `${meeting.assunto}\n${meeting.hora_inicio.substring(0,5)} - ${meeting.hora_fim.substring(0,5)}\nStatus: ${status === 'happening' ? 'Acontecendo agora' : status === 'past' ? 'Finalizada' : 'Agendada'}`;
+                    eventElement.dataset.meetingId = meeting.id;
+                    
+                    // Add click event to show meeting details
+                    eventElement.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        showMeetingDetails(meeting);
+                    });
+                    
+                    eventContainer.appendChild(eventElement);
+                } else {
+                    console.log('Container not found for ID:', eventId);
+                }
+            });
+        }
+
+        function showMeetingDetails(meeting) {
+            // Populate the edit form with meeting data
+            document.getElementById('editMeetingId').value = meeting.id;
+            document.getElementById('editMeetingDate').value = meeting.data_reuniao;
+            document.getElementById('editMeetingStartTime').value = meeting.hora_inicio;
+            document.getElementById('editMeetingEndTime').value = meeting.hora_fim;
+            document.getElementById('editMeetingSubject').value = meeting.assunto;
+            document.getElementById('editMeetingDescription').value = meeting.descricao || '';
+            document.getElementById('editMeetingStatus').value = meeting.status;
+            
+            // Load meeting participants
+            loadMeetingParticipants(meeting.id);
+            
+            // Show the modal
+            document.getElementById('meetingDetailsModal').classList.remove('hidden');
+        }
+
+        function hideMeetingDetailsModal() {
+            document.getElementById('meetingDetailsModal').classList.add('hidden');
+            editSelectedParticipants = [];
+            updateEditSelectedParticipantsDisplay();
+        }
+
+        // Variables for edit participants
+        let editSelectedParticipants = [];
+        let editAllUsers = [];
+
+        function loadMeetingParticipants(meetingId) {
+            fetch(`../api/get_meeting_participants.php?meeting_id=${meetingId}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success && data.participants) {
+                        editSelectedParticipants = data.participants.map(p => ({
+                            id: p.id_usuario,
+                            username: p.username_usuario
+                        }));
+                        updateEditSelectedParticipantsDisplay();
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading meeting participants:', error);
+                });
+        }
+
+        function toggleEditParticipantsDropdown() {
+            const dropdown = document.getElementById('editParticipantsDropdown');
+            const icon = document.getElementById('editDropdownIcon');
+            
+            if (dropdown.classList.contains('hidden')) {
+                dropdown.classList.remove('hidden');
+                icon.classList.remove('fa-chevron-down');
+                icon.classList.add('fa-chevron-up');
+                
+                if (editAllUsers.length === 0) {
+                    loadEditUsers();
+                }
+            } else {
+                closeEditParticipantsDropdown();
+            }
+        }
+
+        function closeEditParticipantsDropdown() {
+            const dropdown = document.getElementById('editParticipantsDropdown');
+            const icon = document.getElementById('editDropdownIcon');
+            
+            dropdown.classList.add('hidden');
+            icon.classList.remove('fa-chevron-up');
+            icon.classList.add('fa-chevron-down');
+        }
+
+        function loadEditUsers() {
+            fetch('../api/get_users.php')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success && data.users) {
+                        editAllUsers = data.users;
+                        renderEditParticipantsList();
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading users for edit:', error);
+                });
+        }
+
+        function renderEditParticipantsList() {
+            const container = document.getElementById('editParticipantsList');
+            const searchTerm = document.getElementById('editParticipantsSearch').value.toLowerCase();
+            
+            const filteredUsers = editAllUsers.filter(user => 
+                user.name.toLowerCase().includes(searchTerm) ||
+                user.username.toLowerCase().includes(searchTerm) ||
+                user.email.toLowerCase().includes(searchTerm)
+            );
+            
+            container.innerHTML = filteredUsers.map(user => {
+                const isSelected = editSelectedParticipants.some(p => p.id === user.id);
+                return `
+                    <div class="px-3 py-2 hover:bg-gray-100 cursor-pointer flex items-center justify-between ${isSelected ? 'bg-blue-50' : ''}"
+                         onclick="toggleEditParticipant(${user.id}, '${user.username}')">
+                        <span class="text-sm">${user.username}</span>
+                        ${isSelected ? '<i class="fas fa-check text-blue-600"></i>' : ''}
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function toggleEditParticipant(id, username) {
+            const existingIndex = editSelectedParticipants.findIndex(p => p.id === id);
+            
+            if (existingIndex > -1) {
+                editSelectedParticipants.splice(existingIndex, 1);
+            } else {
+                editSelectedParticipants.push({ id, username });
+            }
+            
+            updateEditSelectedParticipantsDisplay();
+            renderEditParticipantsList();
+        }
+
+        function updateEditSelectedParticipantsDisplay() {
+            const placeholder = document.getElementById('editParticipantsPlaceholder');
+            const selectedContainer = document.getElementById('editSelectedParticipants');
+            
+            if (editSelectedParticipants.length === 0) {
+                placeholder.style.display = 'block';
+                selectedContainer.innerHTML = '';
+            } else {
+                placeholder.style.display = 'none';
+                selectedContainer.innerHTML = editSelectedParticipants.map(participant => `
+                    <span class="bg-indigo-100 text-indigo-800 text-xs px-2 py-1 rounded-full flex items-center">
+                        ${participant.username}
+                        <button type="button" class="ml-1 text-indigo-600 hover:text-indigo-800" onclick="removeEditParticipant(${participant.id})">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </span>
+                `).join('');
+            }
+        }
+
+        function removeEditParticipant(id) {
+            editSelectedParticipants = editSelectedParticipants.filter(p => p.id !== id);
+            updateEditSelectedParticipantsDisplay();
+            renderEditParticipantsList();
+        }
+
+        function filterEditParticipants() {
+            renderEditParticipantsList();
+        }
+
+        // Error message functions
+        function showMeetingError(message) {
+            const errorContainer = document.getElementById('meetingErrorMessage');
+            const errorText = document.getElementById('meetingErrorText');
+            
+            errorText.textContent = message;
+            errorContainer.classList.remove('hidden');
+            
+            // Auto-hide after 10 seconds
+            setTimeout(() => {
+                hideMeetingError();
+            }, 10000);
+        }
+
+        function hideMeetingError() {
+            const errorContainer = document.getElementById('meetingErrorMessage');
+            errorContainer.classList.add('hidden');
+        }
+
+        // Handle edit meeting form submission
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('editMeetingForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const meetingId = document.getElementById('editMeetingId').value;
+                const meetingDate = document.getElementById('editMeetingDate').value;
+                const meetingStartTime = document.getElementById('editMeetingStartTime').value;
+                const meetingEndTime = document.getElementById('editMeetingEndTime').value;
+                const meetingSubject = document.getElementById('editMeetingSubject').value;
+                const meetingDescription = document.getElementById('editMeetingDescription').value;
+                const meetingStatus = document.getElementById('editMeetingStatus').value;
+                
+                // Validate time range
+                if (meetingStartTime >= meetingEndTime) {
+                    showToast('A hora de início deve ser anterior à hora de fim.', 'warning');
+                    return;
+                }
+                
+                // Validate participants
+                if (editSelectedParticipants.length === 0) {
+                    showToast('Selecione pelo menos um participante.', 'warning');
+                    return;
+                }
+                
+                // Prepare meeting data for API
+                const meetingData = {
+                    meeting_id: meetingId,
+                    date: meetingDate,
+                    start_time: meetingStartTime,
+                    end_time: meetingEndTime,
+                    subject: meetingSubject,
+                    description: meetingDescription,
+                    status: meetingStatus,
+                    participants: editSelectedParticipants
+                };
+                
+                // Send to API
+                fetch('../api/update_meeting.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(meetingData)
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        hideMeetingDetailsModal();
+                        // Clear form
+                        document.getElementById('meetingForm').reset();
+                        editSelectedParticipants = [];
+                        updateEditSelectedParticipantsDisplay();
+                        // Hide error message if visible
+                        hideMeetingError();
+                        // Reload calendar to show new meeting
+                        reloadMeetingsOnCalendar();
+                        showToast('Reunião atualizada com sucesso!', 'success');
+                    } else {
+                        showMeetingError(data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showToast('Erro ao atualizar reunião. Tente novamente.', 'error');
+                });
+            });
+        });
+
+        function deleteMeeting() {
+            const meetingId = document.getElementById('editMeetingId').value;
+            const meetingSubject = document.getElementById('editMeetingSubject').value;
+            
+            if (confirm(`Tem certeza que deseja excluir a reunião "${meetingSubject}"?\nEsta ação não pode ser desfeita.`)) {
+                fetch('../api/delete_meeting.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ meeting_id: meetingId })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        showToast('Reunião excluída com sucesso!', 'success');
+                        hideMeetingDetailsModal();
+                        // Reload calendar to remove deleted meeting
+                        reloadMeetingsOnCalendar();
+                    } else {
+                        showToast('Erro ao excluir reunião: ' + data.message, 'error');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showToast('Erro ao excluir reunião. Tente novamente.', 'error');
+                });
+            }
         }
 
         // New delegated delete function to handle event properly
@@ -863,10 +1435,10 @@ $days_of_week = [
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
-                        alert('Horários removidos com sucesso!');
+                        showToast('Horários removidos com sucesso!', 'success');
                         loadSpecificAvailability();
                     } else {
-                        alert('Erro ao remover horários: ' + data.message);
+                        showToast('Erro ao remover horários: ' + data.message, 'error');
                         // Re-enable button on error
                         button.disabled = false;
                         button.innerHTML = '<i class="fas fa-trash"></i>';
@@ -874,7 +1446,7 @@ $days_of_week = [
                 })
                 .catch(error => {
                     console.error('Error:', error);
-                    alert('Erro ao remover horários. Tente novamente.');
+                    showToast('Erro ao remover horários. Tente novamente.', 'error');
                     // Re-enable button on error
                     button.disabled = false;
                     button.innerHTML = '<i class="fas fa-trash"></i>';
@@ -917,18 +1489,30 @@ $days_of_week = [
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    alert('Perfil atualizado com sucesso!');
+                    showToast('Perfil atualizado com sucesso!', 'success');
                     hideProfileModal();
                     location.reload();
                 } else {
-                    alert('Erro ao atualizar perfil: ' + data.message);
+                    showToast('Erro ao atualizar perfil: ' + data.message, 'error');
                 }
             })
             .catch(error => {
                 console.error('Error:', error);
-                alert('Erro ao atualizar perfil. Tente novamente.');
+                showToast('Erro ao atualizar perfil. Tente novamente.', 'error');
             });
         });
+
+        // Function to reload meetings on calendar
+        function reloadMeetingsOnCalendar() {
+            console.log('Recarregando reuniões no calendário...');
+            loadMonthAppointments(currentDate.getFullYear(), currentDate.getMonth());
+        }
+
+        // Auto-update meeting colors every minute
+        setInterval(() => {
+            console.log('Auto-updating meeting colors...');
+            reloadMeetingsOnCalendar();
+        }, 60000); // Update every 60 seconds
     </script>
 </body>
 </html>
