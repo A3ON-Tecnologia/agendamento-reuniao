@@ -533,16 +533,44 @@ $days_of_week = [
                 return;
             }
             
-            // Show success message with participant details
-            const participantNames = selectedParticipants.map(p => p.username).join(', ');
-            alert(`Reunião agendada com sucesso!\nData: ${meetingDate}\nHorário: ${meetingStartTime} - ${meetingEndTime}\nAssunto: ${meetingSubject}\nParticipantes: ${participantNames}`);
+            // Prepare meeting data for API
+            const meetingData = {
+                date: meetingDate,
+                start_time: meetingStartTime,
+                end_time: meetingEndTime,
+                subject: meetingSubject,
+                description: '', // Pode ser expandido no futuro
+                participants: selectedParticipants
+            };
             
-            hideSpecificDateModal();
-            // Clear form and reset participants
-            document.getElementById('meetingForm').reset();
-            selectedParticipants = [];
-            updateSelectedParticipantsDisplay();
-            closeParticipantsDropdown();
+            // Send to API
+            fetch('../api/create_meeting.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(meetingData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const participantNames = selectedParticipants.map(p => p.username).join(', ');
+                    alert(`Reunião criada com sucesso!\nData: ${meetingDate}\nHorário: ${meetingStartTime} - ${meetingEndTime}\nAssunto: ${meetingSubject}\nParticipantes: ${participantNames}\nID da Reunião: ${data.meeting_id}`);
+                    
+                    hideSpecificDateModal();
+                    // Clear form and reset participants
+                    document.getElementById('meetingForm').reset();
+                    selectedParticipants = [];
+                    updateSelectedParticipantsDisplay();
+                    closeParticipantsDropdown();
+                } else {
+                    alert('Erro ao criar reunião: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Erro ao conectar com o servidor. Tente novamente.');
+            });
         });
 
         function showSpecificDateModal() {

@@ -17,7 +17,7 @@ try {
     $input = json_decode(file_get_contents('php://input'), true);
     
     // Validar dados obrigatórios
-    $required_fields = ['creator_id', 'date', 'start_time', 'end_time', 'subject'];
+    $required_fields = ['date', 'start_time', 'end_time', 'subject'];
     foreach ($required_fields as $field) {
         if (empty($input[$field])) {
             throw new Exception("Campo obrigatório: $field");
@@ -31,7 +31,6 @@ try {
     
     // Criar reunião
     $meeting_id = $meeting->createMeeting(
-        $input['creator_id'],
         $input['date'],
         $input['start_time'],
         $input['end_time'],

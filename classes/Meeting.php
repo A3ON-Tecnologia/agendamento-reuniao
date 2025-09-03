@@ -11,17 +11,16 @@ class Meeting {
     }
 
     // Criar nova reunião
-    public function createMeeting($creator_id, $date, $start_time, $end_time, $subject, $description, $participants = []) {
+    public function createMeeting($date, $start_time, $end_time, $subject, $description, $participants = []) {
         try {
             $this->conn->beginTransaction();
             
             // Inserir reunião
             $query = "INSERT INTO " . $this->table_name . " 
-                     (criador_id, data_reuniao, hora_inicio, hora_fim, assunto, descricao, status, created_at) 
-                     VALUES (:creator_id, :date, :start_time, :end_time, :subject, :description, 'agendada', NOW())";
+                     (data_reuniao, hora_inicio, hora_fim, assunto, descricao, status, data_criacao) 
+                     VALUES (:date, :start_time, :end_time, :subject, :description, 'agendada', NOW())";
             
             $stmt = $this->conn->prepare($query);
-            $stmt->bindParam(':creator_id', $creator_id);
             $stmt->bindParam(':date', $date);
             $stmt->bindParam(':start_time', $start_time);
             $stmt->bindParam(':end_time', $end_time);
@@ -34,8 +33,8 @@ class Meeting {
             // Inserir participantes
             if (!empty($participants)) {
                 $participant_query = "INSERT INTO " . $this->participants_table . " 
-                                    (reuniao_id, usuario_id, username_na_criacao, status_participacao, created_at) 
-                                    VALUES (:meeting_id, :user_id, :username, 'convidado', NOW())";
+                                    (reuniao_id, id_usuario, username_usuario, status_participacao, data_criacao) 
+                                    VALUES (:meeting_id, :user_id, :username, 'confirmado', NOW())";
                 
                 $participant_stmt = $this->conn->prepare($participant_query);
                 
@@ -60,8 +59,8 @@ class Meeting {
     public function getMeetingsByCreator($creator_id) {
         $query = "SELECT r.*, u.name as creator_name 
                   FROM " . $this->table_name . " r 
-                  JOIN users u ON r.criador_id = u.id 
-                  WHERE r.criador_id = :creator_id 
+                  JOIN users u ON r.id = u.id 
+                  WHERE r.id = :creator_id 
                   ORDER BY r.data_reuniao DESC, r.hora_inicio DESC";
         
         $stmt = $this->conn->prepare($query);
@@ -90,7 +89,7 @@ class Meeting {
         $query = "SELECT r.*, u.name as creator_name,
                          COUNT(rp.id) as participant_count
                   FROM " . $this->table_name . " r 
-                  JOIN users u ON r.criador_id = u.id 
+                  JOIN users u ON r.id = u.id 
                   LEFT JOIN " . $this->participants_table . " rp ON r.id = rp.reuniao_id
                   GROUP BY r.id
                   ORDER BY r.data_reuniao DESC, r.hora_inicio DESC";
