@@ -1,12 +1,16 @@
 <?php
-require_once '../includes/auth_check.php';
 require_once '../config/database.php';
 require_once '../classes/User.php';
 require_once '../classes/Appointment.php';
 require_once '../classes/AvailabilitySlot.php';
 
-checkRole('hr_manager');
-$user_info = getUserInfo();
+// Mock user info for direct access
+$user_info = [
+    'id' => 1,
+    'name' => 'Gestor RH',
+    'email' => 'hr@empresa.com',
+    'role' => 'hr_manager'
+];
 
 $database = new Database();
 $db = $database->getConnection();
@@ -52,280 +56,111 @@ $days_of_week = [
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 </head>
 <body class="bg-gray-50 min-h-screen">
-    <!-- Navigation -->
-    <nav class="bg-white shadow-lg border-b">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between h-16">
-                <div class="flex items-center">
-                    <div class="flex-shrink-0">
-                        <i class="fas fa-calendar-alt text-indigo-600 text-2xl"></i>
-                    </div>
-                    <div class="ml-4">
-                        <h1 class="text-xl font-semibold text-gray-900">Dashboard Gestor</h1>
-                        <p class="text-sm text-gray-600">Bem-vindo, <?php echo htmlspecialchars($user_info['name']); ?></p>
-                    </div>
-                </div>
-                <div class="flex items-center space-x-4">
-                    <button onclick="showSpecificDateModal()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition duration-200 text-sm">
-                        <i class="fas fa-calendar-plus mr-2"></i>Configurar Horários
-                    </button>
-                    <button onclick="showProfileModal()" class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg transition duration-200">
-                        <i class="fas fa-user mr-2"></i>Conta
-                    </button>
-                    <a href="../auth/logout.php" class="text-gray-600 hover:text-gray-900 transition duration-200">
-                        <i class="fas fa-sign-out-alt mr-2"></i>Sair
-                    </a>
-                </div>
-            </div>
-        </div>
-    </nav>
-
-    <div class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-        <!-- Stats Cards -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            <div class="bg-white overflow-hidden shadow rounded-lg">
-                <div class="p-5">
-                    <div class="flex items-center">
-                        <div class="flex-shrink-0">
-                            <i class="fas fa-calendar-check text-green-600 text-2xl"></i>
-                        </div>
-                        <div class="ml-5 w-0 flex-1">
-                            <dl>
-                                <dt class="text-sm font-medium text-gray-500 truncate">Reuniões Hoje</dt>
-                                <dd class="text-lg font-medium text-gray-900">
-                                    <?php 
-                                    $today_count = 0;
-                                    foreach($appointments as $apt) {
-                                        if($apt['appointment_date'] == date('Y-m-d') && $apt['status'] == 'scheduled') {
-                                            $today_count++;
-                                        }
-                                    }
-                                    echo $today_count;
-                                    ?>
-                                </dd>
-                            </dl>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="bg-white overflow-hidden shadow rounded-lg">
-                <div class="p-5">
-                    <div class="flex items-center">
-                        <div class="flex-shrink-0">
-                            <i class="fas fa-clock text-blue-600 text-2xl"></i>
-                        </div>
-                        <div class="ml-5 w-0 flex-1">
-                            <dl>
-                                <dt class="text-sm font-medium text-gray-500 truncate">Próximas Reuniões</dt>
-                                <dd class="text-lg font-medium text-gray-900">
-                                    <?php 
-                                    $upcoming_count = 0;
-                                    foreach($appointments as $apt) {
-                                        if($apt['appointment_date'] >= date('Y-m-d') && $apt['status'] == 'scheduled') {
-                                            $upcoming_count++;
-                                        }
-                                    }
-                                    echo $upcoming_count;
-                                    ?>
-                                </dd>
-                            </dl>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="bg-white overflow-hidden shadow rounded-lg">
-                <div class="p-5">
-                    <div class="flex items-center">
-                        <div class="flex-shrink-0">
-                            <i class="fas fa-history text-purple-600 text-2xl"></i>
-                        </div>
-                        <div class="ml-5 w-0 flex-1">
-                            <dl>
-                                <dt class="text-sm font-medium text-gray-500 truncate">Total de Reuniões</dt>
-                                <dd class="text-lg font-medium text-gray-900"><?php echo count($appointments); ?></dd>
-                            </dl>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Current Availability -->
-        <div class="bg-white shadow rounded-lg mb-8">
+    <div class="max-w-full h-screen flex flex-col">
+        <!-- Calendar View -->
+        <div class="bg-white shadow rounded-lg flex-1 flex flex-col">
             <div class="px-6 py-4 border-b border-gray-200">
                 <div class="flex justify-between items-center">
                     <h3 class="text-lg font-medium text-gray-900">
-                        <i class="fas fa-clock mr-2"></i>Horários Disponíveis Configurados
+                        <i class="fas fa-calendar-alt mr-2"></i>Calendário de Agendamentos
                     </h3>
                     <div class="flex space-x-2">
                         <button onclick="showSpecificDateModal()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition duration-200 text-sm">
-                            <i class="fas fa-calendar-plus mr-2"></i>Configurar Horários
+                            <i class="fas fa-calendar-plus mr-2"></i>Agendar Reunião
                         </button>
                     </div>
                 </div>
             </div>
-            <div class="p-6">
-                <!-- Specific dates availability -->
-                <div id="specificAvailabilityList">
-                    <!-- Specific availability will be loaded here -->
+            <div class="p-6 flex-1 overflow-y-auto">
+                <!-- Calendar Container -->
+                <div id="calendar" class="w-full">
+                    <!-- Calendar Header -->
+                    <div class="flex justify-between items-center mb-6">
+                        <button id="prevMonth" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg transition duration-200">
+                            <i class="fas fa-chevron-left"></i>
+                        </button>
+                        <h2 id="currentMonth" class="text-2xl font-bold text-gray-900"></h2>
+                        <button id="nextMonth" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg transition duration-200">
+                            <i class="fas fa-chevron-right"></i>
+                        </button>
+                    </div>
+                    
+                    <!-- Calendar Grid -->
+                    <div class="grid grid-cols-7 gap-1 mb-2">
+                        <div class="text-center font-semibold text-gray-600 py-3">Dom</div>
+                        <div class="text-center font-semibold text-gray-600 py-3">Seg</div>
+                        <div class="text-center font-semibold text-gray-600 py-3">Ter</div>
+                        <div class="text-center font-semibold text-gray-600 py-3">Qua</div>
+                        <div class="text-center font-semibold text-gray-600 py-3">Qui</div>
+                        <div class="text-center font-semibold text-gray-600 py-3">Sex</div>
+                        <div class="text-center font-semibold text-gray-600 py-3">Sáb</div>
+                    </div>
+                    
+                    <!-- Calendar Days -->
+                    <div id="calendarDays" class="grid grid-cols-7 gap-1 h-[400px]">
+                        <!-- Days will be generated by JavaScript -->
+                    </div>
                 </div>
             </div>
         </div>
 
-        <!-- Recent Appointments -->
-        <div class="bg-white shadow rounded-lg">
-            <div class="px-6 py-4 border-b border-gray-200">
-                <h3 class="text-lg font-medium text-gray-900">
-                    <i class="fas fa-calendar-alt mr-2"></i>Reuniões Recentes
-                </h3>
-            </div>
-            <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-gray-50">
-                        <tr>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Data/Hora</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Participante</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Descrição</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ações</th>
-                        </tr>
-                    </thead>
-                    <tbody class="bg-white divide-y divide-gray-200">
-                        <?php if (empty($appointments)): ?>
-                            <tr>
-                                <td colspan="5" class="px-6 py-4 text-center text-gray-500">
-                                    <i class="fas fa-calendar-times text-4xl mb-2 block"></i>
-                                    Nenhuma reunião agendada ainda.
-                                </td>
-                            </tr>
-                        <?php else: ?>
-                            <?php foreach (array_slice($appointments, 0, 10) as $apt): ?>
-                                <tr class="hover:bg-gray-50">
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <div class="text-sm font-medium text-gray-900">
-                                            <?php echo date('d/m/Y', strtotime($apt['appointment_date'])); ?>
-                                        </div>
-                                        <div class="text-sm text-gray-500">
-                                            <?php echo date('H:i', strtotime($apt['start_time'])); ?> - 
-                                            <?php echo date('H:i', strtotime($apt['end_time'])); ?>
-                                        </div>
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <div class="text-sm font-medium text-gray-900"><?php echo htmlspecialchars($apt['user_name']); ?></div>
-                                        <div class="text-sm text-gray-500"><?php echo htmlspecialchars($apt['user_email']); ?></div>
-                                    </td>
-                                    <td class="px-6 py-4">
-                                        <div class="text-sm text-gray-900 max-w-xs truncate">
-                                            <?php echo htmlspecialchars($apt['description'] ?: 'Sem descrição'); ?>
-                                        </div>
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <?php
-                                        $status_classes = [
-                                            'scheduled' => 'bg-blue-100 text-blue-800',
-                                            'completed' => 'bg-green-100 text-green-800',
-                                            'cancelled' => 'bg-red-100 text-red-800'
-                                        ];
-                                        $status_labels = [
-                                            'scheduled' => 'Agendada',
-                                            'completed' => 'Concluída',
-                                            'cancelled' => 'Cancelada'
-                                        ];
-                                        ?>
-                                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full <?php echo $status_classes[$apt['status']]; ?>">
-                                            <?php echo $status_labels[$apt['status']]; ?>
-                                        </span>
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                        <?php if ($apt['status'] == 'scheduled'): ?>
-                                            <button onclick="updateAppointmentStatus(<?php echo $apt['id']; ?>, 'completed')" 
-                                                    class="text-green-600 hover:text-green-900 mr-3">
-                                                <i class="fas fa-check"></i> Concluir
-                                            </button>
-                                            <button onclick="updateAppointmentStatus(<?php echo $apt['id']; ?>, 'cancelled')" 
-                                                    class="text-red-600 hover:text-red-900">
-                                                <i class="fas fa-times"></i> Cancelar
-                                            </button>
-                                        <?php endif; ?>
-                                    </td>
-                                </tr>
-                            <?php endforeach; ?>
-                        <?php endif; ?>
-                    </tbody>
-                </table>
-            </div>
-        </div>
     </div>
 
-    <!-- Specific Date Availability Modal -->
+    <!-- Meeting Scheduling Modal -->
     <div id="specificDateModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden overflow-y-auto h-full w-full z-50">
         <div class="relative top-20 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-1/2 shadow-lg rounded-md bg-white">
             <div class="mt-3">
                 <div class="flex justify-between items-center mb-4">
-                    <h3 class="text-lg font-medium text-gray-900">Configurar Horários para Data Específica</h3>
+                    <h3 class="text-lg font-medium text-gray-900">Agendar Reunião</h3>
                     <button onclick="hideSpecificDateModal()" class="text-gray-400 hover:text-gray-600">
                         <i class="fas fa-times text-xl"></i>
                     </button>
                 </div>
-                <form id="specificDateForm">
+                <form id="meetingForm">
                     <div class="space-y-4">
+                        <!-- Usuários -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Usuários Participantes</label>
+                            <select name="users[]" multiple 
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500 bg-white h-32">
+                                <!-- Lista vazia no momento - usuários serão carregados da tabela -->
+                            </select>
+                            <p class="text-xs text-gray-500 mt-1">Segure Ctrl (Windows) ou Cmd (Mac) para selecionar múltiplos usuários (lista vazia no momento)</p>
+                        </div>
+
+                        <!-- Data -->
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">Data</label>
-                            <input type="date" id="specificDate" name="specific_date" required 
+                            <input type="date" id="meetingDate" name="meeting_date" required 
                                    min="<?php echo date('Y-m-d'); ?>"
                                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500">
                         </div>
 
-                        <div id="timeSlotsList" class="space-y-3">
-                            <div class="flex justify-between items-center">
-                                <label class="block text-sm font-medium text-gray-700">Horários Disponíveis</label>
-                                <button type="button" onclick="addTimeSlot()" class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-sm">
-                                    <i class="fas fa-plus mr-1"></i>Adicionar Horário
-                                </button>
-                            </div>
-                            <div class="time-slot-item border border-gray-200 rounded-lg p-3">
-                                <div class="grid grid-cols-4 gap-3 items-end">
-                                    <div>
-                                        <label class="block text-xs text-gray-600 mb-1">Início</label>
-                                        <input type="time" name="start_time[]" required 
-                                               class="w-full px-2 py-1 border border-gray-300 rounded text-sm">
-                                    </div>
-                                    <div>
-                                        <label class="block text-xs text-gray-600 mb-1">Fim</label>
-                                        <input type="time" name="end_time[]" required 
-                                               class="w-full px-2 py-1 border border-gray-300 rounded text-sm">
-                                    </div>
-                                    <div>
-                                        <label class="block text-xs text-gray-600 mb-1">Duração (min)</label>
-                                        <select name="duration[]" class="w-full px-2 py-1 border border-gray-300 rounded text-sm">
-                                            <option value="30">30 min</option>
-                                            <option value="60" selected>60 min</option>
-                                            <option value="90">90 min</option>
-                                            <option value="120">120 min</option>
-                                        </select>
-                                    </div>
-                                    <div>
-                                        <button type="button" onclick="removeTimeSlot(this)" class="bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded text-sm">
-                                            <i class="fas fa-trash"></i>
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
+                        <!-- Hora -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Hora</label>
+                            <input type="time" id="meetingTime" name="meeting_time" required
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500">
                         </div>
-                    </div>
 
-                    <div class="mt-6 flex justify-end space-x-3">
-                        <button type="button" onclick="hideSpecificDateModal()" 
-                                class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50">
-                            Cancelar
-                        </button>
-                        <button type="submit" 
-                                class="px-4 py-2 bg-green-600 border border-transparent rounded-md text-sm font-medium text-white hover:bg-green-700">
-                            Salvar Horários
-                        </button>
-                    </div>
+                        <!-- Assunto -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Assunto</label>
+                            <textarea id="meetingSubject" name="meeting_subject" required rows="3"
+                                      placeholder="Digite o assunto da reunião..."
+                                      class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500 resize-none"></textarea>
+                        </div>
+
+                        <div class="flex justify-end space-x-3 pt-4">
+                            <button type="button" onclick="hideSpecificDateModal()" 
+                                    class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition duration-200">
+                                Cancelar
+                            </button>
+                            <button type="submit" 
+                                    class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-md transition duration-200">
+                                <i class="fas fa-calendar-plus mr-2"></i>Agendar Reunião
+                            </button>
+                        </div>
                 </form>
             </div>
         </div>
@@ -488,89 +323,6 @@ $days_of_week = [
             }
         }
 
-        function editSpecificDate(date) {
-            // Load existing data for this date
-            fetch('../api/get_specific_availability.php')
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success && data.availability) {
-                        const dateSlots = data.availability.filter(slot => slot.specific_date === date);
-                        if (dateSlots.length > 0) {
-                            // Populate modal with existing data
-                            document.getElementById('specificDate').value = date;
-                            
-                            // Clear existing time slots
-                            const timeSlotsList = document.getElementById('timeSlotsList');
-                            const existingSlots = timeSlotsList.querySelectorAll('.time-slot-item');
-                            existingSlots.forEach((slot, index) => {
-                                if (index > 0) slot.remove(); // Keep first slot, remove others
-                            });
-                            
-                            // Populate first slot
-                            const firstSlot = timeSlotsList.querySelector('.time-slot-item');
-                            if (dateSlots[0]) {
-                                firstSlot.querySelector('input[name="start_time[]"]').value = dateSlots[0].start_time.substring(0,5);
-                                firstSlot.querySelector('input[name="end_time[]"]').value = dateSlots[0].end_time.substring(0,5);
-                                firstSlot.querySelector('select[name="duration[]"]').value = dateSlots[0].slot_duration;
-                            }
-                            
-                            // Add additional slots if needed
-                            for (let i = 1; i < dateSlots.length; i++) {
-                                addTimeSlot();
-                                const newSlot = timeSlotsList.lastElementChild;
-                                newSlot.querySelector('input[name="start_time[]"]').value = dateSlots[i].start_time.substring(0,5);
-                                newSlot.querySelector('input[name="end_time[]"]').value = dateSlots[i].end_time.substring(0,5);
-                                newSlot.querySelector('select[name="duration[]"]').value = dateSlots[i].slot_duration;
-                            }
-                            
-                            showSpecificDateModal();
-                        }
-                    }
-                });
-        }
-
-        function deleteSpecificDate(date) {
-            if (confirm('Tem certeza que deseja remover os horários desta data?')) {
-                // Disable the button to prevent multiple clicks
-                const deleteButton = event.target.closest('button');
-                if (deleteButton) {
-                    deleteButton.disabled = true;
-                    deleteButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
-                }
-
-                fetch('../api/delete_specific_availability.php', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ specific_date: date })
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        alert('Horários removidos com sucesso!');
-                        loadSpecificAvailability();
-                    } else {
-                        alert('Erro ao remover horários: ' + data.message);
-                        // Re-enable button on error
-                        if (deleteButton) {
-                            deleteButton.disabled = false;
-                            deleteButton.innerHTML = '<i class="fas fa-trash"></i>';
-                        }
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    alert('Erro ao remover horários. Tente novamente.');
-                    // Re-enable button on error
-                    if (deleteButton) {
-                        deleteButton.disabled = false;
-                        deleteButton.innerHTML = '<i class="fas fa-trash"></i>';
-                    }
-                });
-            }
-        }
-
         function loadSpecificAvailability() {
             console.log('Loading specific availability...');
             fetch('../api/get_specific_availability.php')
@@ -725,42 +477,88 @@ $days_of_week = [
             });
         });
 
-        // Handle specific date form submission
-        document.getElementById('specificDateForm').addEventListener('submit', function(e) {
+        // Handle meeting form submission
+        document.getElementById('meetingForm').addEventListener('submit', function(e) {
             e.preventDefault();
             
             const formData = new FormData(this);
             
-            fetch('../api/save_specific_availability.php', {
-                method: 'POST',
-                body: formData
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    hideSpecificDateModal();
-                    // Clear form
-                    document.getElementById('specificDateForm').reset();
-                    // Show success message
-                    alert('Horário disponível cadastrado com sucesso!');
-                    // Reload the list to show the new availability
-                    loadSpecificAvailability();
-                } else {
-                    alert('Erro ao salvar horários: ' + data.message);
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('Erro ao salvar horários. Tente novamente.');
-            });
+            // Get selected users
+            const selectedUsers = [];
+            const userSelect = document.querySelector('select[name="users[]"]');
+            const selectedOptions = userSelect.selectedOptions;
+            
+            for (let option of selectedOptions) {
+                selectedUsers.push(option.value);
+            }
+            
+            if (selectedUsers.length === 0) {
+                alert('Por favor, selecione pelo menos um usuário para a reunião.');
+                return;
+            }
+            
+            // For now, just show success message (no API connection)
+            const meetingDate = document.getElementById('meetingDate').value;
+            const meetingTime = document.getElementById('meetingTime').value;
+            const meetingSubject = document.getElementById('meetingSubject').value;
+            
+            alert(`Reunião agendada com sucesso!\nData: ${meetingDate}\nHora: ${meetingTime}\nAssunto: ${meetingSubject}\nParticipantes: ${selectedUsers.length} usuário(s)`);
+            
+            hideSpecificDateModal();
+            // Clear form
+            document.getElementById('meetingForm').reset();
         });
 
         function showSpecificDateModal() {
             document.getElementById('specificDateModal').classList.remove('hidden');
+            loadUsers(); // Carregar usuários ao abrir modal
         }
 
         function hideSpecificDateModal() {
             document.getElementById('specificDateModal').classList.add('hidden');
+        }
+
+        // Function to load users from API
+        function loadUsers() {
+            fetch('../api/get_users.php')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        const userSelect = document.querySelector('select[name="users[]"]');
+                        userSelect.innerHTML = ''; // Limpar opções existentes
+                        
+                        data.data.forEach(user => {
+                            const option = document.createElement('option');
+                            option.value = user.id;
+                            
+                            // Traduzir roles para português
+                            let roleText = '';
+                            switch(user.role) {
+                                case 'admin':
+                                    roleText = 'Admin';
+                                    break;
+                                case 'hr_manager':
+                                    roleText = 'Gestor RH';
+                                    break;
+                                case 'common_user':
+                                    roleText = 'Usuário';
+                                    break;
+                                default:
+                                    roleText = user.role;
+                            }
+                            
+                            option.textContent = `${user.name} (${roleText}) - ${user.email}`;
+                            userSelect.appendChild(option);
+                        });
+                    } else {
+                        console.error('Erro ao carregar usuários:', data.message);
+                        alert('Erro ao carregar lista de usuários');
+                    }
+                })
+                .catch(error => {
+                    console.error('Erro na requisição:', error);
+                    alert('Erro ao conectar com o servidor');
+                });
         }
 
         function addTimeSlot() {
@@ -786,11 +584,109 @@ $days_of_week = [
             document.getElementById(tabId + 'Content').classList.remove('hidden');
         }
 
-        // Load specific availability on page load
+        // Calendar variables
+        let currentDate = new Date();
+        const monthNames = [
+            'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+            'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
+        ];
+
+        // Load calendar on page load
         document.addEventListener('DOMContentLoaded', function() {
             console.log('DOM loaded, starting initialization...');
-            loadSpecificAvailability();
+            initializeCalendar();
         });
+
+        function initializeCalendar() {
+            renderCalendar();
+            
+            // Event listeners for navigation
+            document.getElementById('prevMonth').addEventListener('click', () => {
+                currentDate.setMonth(currentDate.getMonth() - 1);
+                renderCalendar();
+            });
+            
+            document.getElementById('nextMonth').addEventListener('click', () => {
+                currentDate.setMonth(currentDate.getMonth() + 1);
+                renderCalendar();
+            });
+        }
+
+        function renderCalendar() {
+            const year = currentDate.getFullYear();
+            const month = currentDate.getMonth();
+            
+            // Update month header
+            document.getElementById('currentMonth').textContent = `${monthNames[month]} ${year}`;
+            
+            // Get first day of month and number of days
+            const firstDay = new Date(year, month, 1);
+            const lastDay = new Date(year, month + 1, 0);
+            const startDate = new Date(firstDay);
+            startDate.setDate(startDate.getDate() - firstDay.getDay());
+            
+            const calendarDays = document.getElementById('calendarDays');
+            calendarDays.innerHTML = '';
+            
+            // Generate calendar with proper alignment
+            const daysInMonth = lastDay.getDate();
+            const firstDayOfWeek = firstDay.getDay(); // 0 = Sunday, 1 = Monday, etc.
+            
+            // Add empty cells for days before the first day of the month
+            for (let i = 0; i < firstDayOfWeek; i++) {
+                const emptyElement = document.createElement('div');
+                emptyElement.className = 'h-full p-2 border border-gray-100 bg-gray-50';
+                calendarDays.appendChild(emptyElement);
+            }
+            
+            // Generate days of current month
+            for (let day = 1; day <= daysInMonth; day++) {
+                const date = new Date(year, month, day);
+                
+                const dayElement = document.createElement('div');
+                dayElement.className = `
+                    h-full p-2 border border-gray-200 cursor-pointer transition-colors duration-200
+                    bg-white hover:bg-blue-50 flex flex-col
+                    ${isToday(date) ? 'bg-blue-100 border-blue-300' : ''}
+                `;
+                
+                dayElement.innerHTML = `
+                    <div class="font-medium text-sm mb-1">${day}</div>
+                    <div class="space-y-1" id="events-${date.getFullYear()}-${date.getMonth()}-${date.getDate()}">
+                        <!-- Events will be loaded here -->
+                    </div>
+                `;
+                
+                // Add click event
+                dayElement.addEventListener('click', () => {
+                    selectDate(date);
+                });
+                
+                calendarDays.appendChild(dayElement);
+            }
+            
+            // Load appointments for this month
+            loadMonthAppointments(year, month);
+        }
+
+        function isToday(date) {
+            const today = new Date();
+            return date.toDateString() === today.toDateString();
+        }
+
+        function selectDate(date) {
+            const dateStr = date.toISOString().split('T')[0];
+            console.log('Selected date:', dateStr);
+            
+            // Pre-fill the meeting date and open modal
+            document.getElementById('meetingDate').value = dateStr;
+            showSpecificDateModal();
+        }
+
+        function loadMonthAppointments(year, month) {
+            // Calendar is now clean - no sample events
+            // Real appointments would be loaded from server here
+        }
 
         // New delegated delete function to handle event properly
         function deleteSpecificDateDelegated(date, button) {

@@ -1,24 +1,14 @@
 <?php
-session_start();
-
-// Redirect to appropriate dashboard if already logged in
-if (isset($_SESSION['user_id'])) {
-    switch ($_SESSION['user_role']) {
-        case 'hr_manager':
-            header('Location: dashboard/hr_manager.php');
-            break;
-        case 'admin':
-            header('Location: dashboard/admin.php');
-            break;
-        case 'common_user':
-            header('Location: dashboard/user.php');
-            break;
-        default:
-            header('Location: auth/login.php');
-    }
+// Force redirect to dashboard - bypass any caching or server config issues
+if (!headers_sent()) {
+    header('Location: dashboard/hr_manager.php', true, 301);
     exit();
 }
 ?>
+<script>
+// Fallback JavaScript redirect if PHP headers fail
+window.location.replace('dashboard/hr_manager.php');
+</script>
 
 <!DOCTYPE html>
 <html lang="pt-BR">
@@ -45,32 +35,6 @@ if (isset($_SESSION['user_id'])) {
     <noscript><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet"></noscript>
 </head>
 <body class="bg-gradient-to-br from-orange-50 via-orange-100 to-blue-900 min-h-screen">
-    <!-- Navigation -->
-    <nav class="bg-white/90 shadow-lg border-b border-gray-200">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between h-16">
-                <div class="flex items-center">
-                    <div class="flex-shrink-0">
-                        <div class="h-10 w-10 bg-gradient-to-r from-orange-500 to-blue-900 rounded-lg flex items-center justify-center">
-                            <i class="fas fa-calendar-alt text-white text-xl"></i>
-                        </div>
-                    </div>
-                    <div class="ml-4">
-                        <h1 class="text-xl font-bold text-gray-900">AgendaRH</h1>
-                        <p class="text-sm text-gray-600">Sistema de Agendamento de Reuniões</p>
-                    </div>
-                </div>
-                <div class="flex items-center space-x-4">
-                    <a href="auth/login.php" class="text-gray-600 hover:text-orange-600 font-medium transition duration-200">
-                        <i class="fas fa-sign-in-alt mr-2"></i>Entrar
-                    </a>
-                    <a href="auth/register.php" class="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg font-medium transition duration-200 transform hover:scale-105">
-                        <i class="fas fa-user-plus mr-2"></i>Registrar
-                    </a>
-                </div>
-            </div>
-        </div>
-    </nav>
 
     <!-- Hero Section -->
     <div class="relative overflow-hidden">
@@ -83,15 +47,12 @@ if (isset($_SESSION['user_id'])) {
                     </span>
                 </h1>
                 <p class="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
-                    Sistema completo para agendamento de reuniões com o RH. 
+                    Sistema completo para agendamento de reuniões da JP Contábil.<br>
                     Interface intuitiva, calendário integrado e controle total de disponibilidade.
                 </p>
-                <div class="flex flex-col sm:flex-row gap-4 justify-center">
-                    <a href="auth/login.php" class="bg-orange-500 hover:bg-orange-600 text-white px-8 py-4 rounded-xl font-semibold text-lg transition duration-200 transform hover:scale-105 shadow-lg">
-                        <i class="fas fa-rocket mr-2"></i>Começar Agora
-                    </a>
-                    <a href="#features" class="border-2 border-orange-500 text-orange-500 hover:bg-orange-500 hover:text-white px-8 py-4 rounded-xl font-semibold text-lg transition duration-200">
-                        <i class="fas fa-info-circle mr-2"></i>Saiba Mais
+                <div class="flex justify-center">
+                    <a href="dashboard/hr_manager.php" class="bg-orange-500 hover:bg-blue-900 text-white px-8 py-4 rounded-xl font-semibold text-lg transition-all duration-300 transform hover:scale-110 shadow-lg">
+                        <i class="fas fa-rocket mr-2"></i>Acessar Sistema
                     </a>
                 </div>
             </div>
@@ -113,7 +74,7 @@ if (isset($_SESSION['user_id'])) {
 
             <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
                 <!-- Feature 1 -->
-                <div class="bg-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition duration-200">
+                <div class="bg-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105">
                     <div class="h-16 w-16 bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl flex items-center justify-center mb-6">
                         <i class="fas fa-calendar-check text-white text-2xl"></i>
                     </div>
@@ -125,19 +86,18 @@ if (isset($_SESSION['user_id'])) {
                 </div>
 
                 <!-- Feature 2 -->
-                <div class="bg-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition duration-200">
+                <div class="bg-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105">
                     <div class="h-16 w-16 bg-gradient-to-r from-orange-500 to-orange-600 rounded-xl flex items-center justify-center mb-6">
                         <i class="fas fa-users-cog text-white text-2xl"></i>
                     </div>
                     <h3 class="text-xl font-bold text-gray-900 mb-4">Controle de Acesso</h3>
                     <p class="text-gray-600">
-                        Sistema com 3 níveis de permissão: Gestor RH, Admin e Usuário Comum. 
-                        Cada um com acesso específico às informações.
+                        Sistema integrado com o portal da JP Contábil. 
                     </p>
                 </div>
 
                 <!-- Feature 3 -->
-                <div class="bg-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition duration-200">
+                <div class="bg-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105">
                     <div class="h-16 w-16 bg-gradient-to-r from-blue-800 to-blue-900 rounded-xl flex items-center justify-center mb-6">
                         <i class="fas fa-chart-line text-white text-2xl"></i>
                     </div>
@@ -149,60 +109,7 @@ if (isset($_SESSION['user_id'])) {
                 </div>
             </div>
         </div>
-    </section>
-
-    <!-- How It Works Section -->
-    <section class="py-20">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="text-center mb-16">
-                <h2 class="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-                    Como Funciona
-                </h2>
-                <p class="text-xl text-gray-600 max-w-2xl mx-auto">
-                    Processo simples e intuitivo em poucos passos
-                </p>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-                <!-- Step 1 -->
-                <div class="text-center">
-                    <div class="h-20 w-20 bg-gradient-to-r from-orange-500 to-blue-900 rounded-full flex items-center justify-center mx-auto mb-6">
-                        <span class="text-white text-2xl font-bold">1</span>
-                    </div>
-                    <h3 class="text-xl font-bold text-gray-900 mb-4">Faça Login</h3>
-                    <p class="text-gray-600">
-                        Acesse sua conta ou registre-se no sistema. 
-                        Cada tipo de usuário tem acesso personalizado.
-                    </p>
-                </div>
-
-                <!-- Step 2 -->
-                <div class="text-center">
-                    <div class="h-20 w-20 bg-gradient-to-r from-orange-500 to-blue-900 rounded-full flex items-center justify-center mx-auto mb-6">
-                        <span class="text-white text-2xl font-bold">2</span>
-                    </div>
-                    <h3 class="text-xl font-bold text-gray-900 mb-4">Escolha o Horário</h3>
-                    <p class="text-gray-600">
-                        Visualize o calendário com horários disponíveis e 
-                        selecione o melhor momento para sua reunião.
-                    </p>
-                </div>
-
-                <!-- Step 3 -->
-                <div class="text-center">
-                    <div class="h-20 w-20 bg-gradient-to-r from-orange-500 to-blue-900 rounded-full flex items-center justify-center mx-auto mb-6">
-                        <span class="text-white text-2xl font-bold">3</span>
-                    </div>
-                    <h3 class="text-xl font-bold text-gray-900 mb-4">Confirme a Reunião</h3>
-                    <p class="text-gray-600">
-                        Adicione uma descrição e confirme o agendamento. 
-                        Receba confirmação instantânea.
-                    </p>
-                </div>
-            </div>
-        </div>
-    </section>
-
+    </section>  
 
     <!-- CTA Section -->
     <section class="py-20 bg-gradient-to-r from-orange-500 to-blue-900">
@@ -213,12 +120,9 @@ if (isset($_SESSION['user_id'])) {
             <p class="text-xl text-orange-100 mb-8">
                 Simplifique o agendamento de reuniões na sua empresa hoje mesmo.
             </p>
-            <div class="flex flex-col sm:flex-row gap-4 justify-center">
-                <a href="auth/register.php" class="bg-white text-orange-600 hover:bg-gray-100 px-8 py-4 rounded-xl font-semibold text-lg transition duration-200 transform hover:scale-105">
-                    <i class="fas fa-user-plus mr-2"></i>Criar Conta Gratuita
-                </a>
-                <a href="auth/login.php" class="border-2 border-white text-white hover:bg-white hover:text-orange-600 px-8 py-4 rounded-xl font-semibold text-lg transition duration-200">
-                    <i class="fas fa-sign-in-alt mr-2"></i>Fazer Login
+            <div class="flex justify-center">
+                <a href="dashboard/hr_manager.php" class="bg-orange-500 hover:bg-blue-900 text-white px-8 py-4 rounded-xl font-semibold text-lg transition-all duration-300 transform hover:scale-110 shadow-lg">
+                    <i class="fas fa-calendar-alt mr-2"></i>Acessar Sistema
                 </a>
             </div>
         </div>
@@ -233,7 +137,7 @@ if (isset($_SESSION['user_id'])) {
                         <div class="h-8 w-8 bg-gradient-to-r from-orange-500 to-blue-900 rounded-lg flex items-center justify-center mr-3">
                             <i class="fas fa-calendar-alt text-white"></i>
                         </div>
-                        <h3 class="text-xl font-bold">AgendaRH</h3>
+                        <h3 class="text-xl font-bold">AgendaJP</h3>
                     </div>
                     <p class="text-gray-400">
                         Sistema completo para agendamento de reuniões com interface moderna e intuitiva.
@@ -247,11 +151,14 @@ if (isset($_SESSION['user_id'])) {
                         <span class="bg-gray-800 px-3 py-1 rounded-full text-sm">MySQL</span>
                         <span class="bg-gray-800 px-3 py-1 rounded-full text-sm">Tailwind CSS</span>
                         <span class="bg-gray-800 px-3 py-1 rounded-full text-sm">JavaScript</span>
+                        <span class="bg-gray-800 px-3 py-1 rounded-full text-sm">HTML</span>
+                        <span class="bg-gray-800 px-3 py-1 rounded-full text-sm">CSS</span>
+                        <span class="bg-gray-800 px-3 py-1 rounded-full text-sm">PYTHON</span>
                     </div>
                 </div>
             </div>
             <div class="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
-                <p>&copy; 2025 AgendaRH. Sistema de Agendamento de Reuniões.</p>
+                <p>&copy; 2025 AgendaJP. Sistema de Agendamento de Reuniões.</p>
             </div>
         </div>
     </footer>
