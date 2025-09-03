@@ -108,8 +108,8 @@ $days_of_week = [
     </div>
 
     <!-- Meeting Scheduling Modal -->
-    <div id="specificDateModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden overflow-y-auto h-full w-full z-50">
-        <div class="relative top-20 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-1/2 shadow-lg rounded-md bg-white">
+    <div id="specificDateModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden overflow-y-auto h-full w-full z-50 flex items-center justify-center">
+        <div class="relative mx-auto p-5 border w-11/12 md:w-3/4 lg:w-1/2 shadow-lg rounded-md bg-white max-h-[90vh] overflow-y-auto">
             <div class="mt-3">
                 <div class="flex justify-between items-center mb-4">
                     <h3 class="text-lg font-medium text-gray-900">Agendar Reunião</h3>
@@ -122,11 +122,35 @@ $days_of_week = [
                         <!-- Usuários -->
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">Usuários Participantes</label>
-                            <select name="users[]" multiple 
-                                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500 bg-white h-32">
-                                <!-- Lista vazia no momento - usuários serão carregados da tabela -->
-                            </select>
-                            <p class="text-xs text-gray-500 mt-1">Segure Ctrl (Windows) ou Cmd (Mac) para selecionar múltiplos usuários (lista vazia no momento)</p>
+                            <div class="relative">
+                                <!-- Input field that opens dropdown -->
+                                <div id="participantsInput" 
+                                     class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white cursor-pointer min-h-[42px] flex flex-wrap items-center gap-1"
+                                     onclick="toggleParticipantsDropdown()">
+                                    <span id="participantsPlaceholder" class="text-gray-500">Clique para selecionar participantes...</span>
+                                    <div id="selectedParticipants" class="flex flex-wrap gap-1"></div>
+                                    <i class="fas fa-chevron-down ml-auto text-gray-400" id="dropdownIcon"></i>
+                                </div>
+                                
+                                <!-- Dropdown list -->
+                                <div id="participantsDropdown" 
+                                     class="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-y-auto hidden">
+                                    <!-- Search input -->
+                                    <div class="p-2 border-b border-gray-200">
+                                        <input type="text" 
+                                               id="participantsSearch" 
+                                               placeholder="Buscar usuários..." 
+                                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
+                                               onclick="event.stopPropagation()"
+                                               oninput="filterParticipants()">
+                                    </div>
+                                    <!-- Users list -->
+                                    <div id="participantsList" class="py-1">
+                                        <div class="px-3 py-2 text-gray-500 text-sm">Carregando usuários...</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <p class="text-xs text-gray-500 mt-1">Clique no campo acima para selecionar múltiplos participantes</p>
                         </div>
 
                         <!-- Data -->
@@ -137,11 +161,18 @@ $days_of_week = [
                                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500">
                         </div>
 
-                        <!-- Hora -->
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Hora</label>
-                            <input type="time" id="meetingTime" name="meeting_time" required
-                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500">
+                        <!-- Horários -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Hora de Início</label>
+                                <input type="time" id="meetingStartTime" name="meeting_start_time" required
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Hora de Fim</label>
+                                <input type="time" id="meetingEndTime" name="meeting_end_time" required
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500">
+                            </div>
                         </div>
 
                         <!-- Assunto -->
@@ -484,30 +515,34 @@ $days_of_week = [
             
             const formData = new FormData(this);
             
-            // Get selected users
-            const selectedUsers = [];
-            const userSelect = document.querySelector('select[name="users[]"]');
-            const selectedOptions = userSelect.selectedOptions;
-            
-            for (let option of selectedOptions) {
-                selectedUsers.push(option.value);
-            }
-            
-            if (selectedUsers.length === 0) {
-                alert('Por favor, selecione pelo menos um usuário para a reunião.');
+            // Check if participants are selected
+            if (selectedParticipants.length === 0) {
+                alert('Por favor, selecione pelo menos um participante para a reunião.');
                 return;
             }
             
-            // For now, just show success message (no API connection)
+            // Get form data
             const meetingDate = document.getElementById('meetingDate').value;
-            const meetingTime = document.getElementById('meetingTime').value;
+            const meetingStartTime = document.getElementById('meetingStartTime').value;
+            const meetingEndTime = document.getElementById('meetingEndTime').value;
             const meetingSubject = document.getElementById('meetingSubject').value;
             
-            alert(`Reunião agendada com sucesso!\nData: ${meetingDate}\nHora: ${meetingTime}\nAssunto: ${meetingSubject}\nParticipantes: ${selectedUsers.length} usuário(s)`);
+            // Validate time range
+            if (meetingStartTime >= meetingEndTime) {
+                alert('A hora de início deve ser anterior à hora de fim.');
+                return;
+            }
+            
+            // Show success message with participant details
+            const participantNames = selectedParticipants.map(p => p.username).join(', ');
+            alert(`Reunião agendada com sucesso!\nData: ${meetingDate}\nHorário: ${meetingStartTime} - ${meetingEndTime}\nAssunto: ${meetingSubject}\nParticipantes: ${participantNames}`);
             
             hideSpecificDateModal();
-            // Clear form
+            // Clear form and reset participants
             document.getElementById('meetingForm').reset();
+            selectedParticipants = [];
+            updateSelectedParticipantsDisplay();
+            closeParticipantsDropdown();
         });
 
         function showSpecificDateModal() {
@@ -519,47 +554,134 @@ $days_of_week = [
             document.getElementById('specificDateModal').classList.add('hidden');
         }
 
+        // Variables for new interactive participants selector
+        let allUsers = [];
+        let selectedParticipants = [];
+
         // Function to load users from API
         function loadUsers() {
             fetch('../api/get_users.php')
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
-                        const userSelect = document.querySelector('select[name="users[]"]');
-                        userSelect.innerHTML = ''; // Limpar opções existentes
-                        
-                        data.data.forEach(user => {
-                            const option = document.createElement('option');
-                            option.value = user.id;
-                            
-                            // Traduzir roles para português
-                            let roleText = '';
-                            switch(user.role) {
-                                case 'admin':
-                                    roleText = 'Admin';
-                                    break;
-                                case 'hr_manager':
-                                    roleText = 'Gestor RH';
-                                    break;
-                                case 'common_user':
-                                    roleText = 'Usuário';
-                                    break;
-                                default:
-                                    roleText = user.role;
-                            }
-                            
-                            option.textContent = `${user.name} (${roleText}) - ${user.email}`;
-                            userSelect.appendChild(option);
-                        });
+                        allUsers = data.data;
+                        renderParticipantsList();
                     } else {
                         console.error('Erro ao carregar usuários:', data.message);
-                        alert('Erro ao carregar lista de usuários');
+                        document.getElementById('participantsList').innerHTML = 
+                            '<div class="px-3 py-2 text-red-500 text-sm">Erro ao carregar usuários</div>';
                     }
                 })
                 .catch(error => {
                     console.error('Erro na requisição:', error);
-                    alert('Erro ao conectar com o servidor');
+                    document.getElementById('participantsList').innerHTML = 
+                        '<div class="px-3 py-2 text-red-500 text-sm">Erro ao conectar com o servidor</div>';
                 });
+        }
+
+        // Toggle dropdown visibility
+        function toggleParticipantsDropdown() {
+            const dropdown = document.getElementById('participantsDropdown');
+            const icon = document.getElementById('dropdownIcon');
+            
+            if (dropdown.classList.contains('hidden')) {
+                dropdown.classList.remove('hidden');
+                icon.classList.remove('fa-chevron-down');
+                icon.classList.add('fa-chevron-up');
+                document.getElementById('participantsSearch').focus();
+            } else {
+                closeParticipantsDropdown();
+            }
+        }
+
+        // Close dropdown
+        function closeParticipantsDropdown() {
+            const dropdown = document.getElementById('participantsDropdown');
+            const icon = document.getElementById('dropdownIcon');
+            dropdown.classList.add('hidden');
+            icon.classList.remove('fa-chevron-up');
+            icon.classList.add('fa-chevron-down');
+            document.getElementById('participantsSearch').value = '';
+            renderParticipantsList();
+        }
+
+        // Filter participants based on search
+        function filterParticipants() {
+            const searchTerm = document.getElementById('participantsSearch').value.toLowerCase();
+            const filteredUsers = allUsers.filter(user => 
+                user.name.toLowerCase().includes(searchTerm) || 
+                user.username.toLowerCase().includes(searchTerm) ||
+                user.email.toLowerCase().includes(searchTerm)
+            );
+            renderParticipantsList(filteredUsers);
+        }
+
+        // Render participants list
+        function renderParticipantsList(users = allUsers) {
+            const listContainer = document.getElementById('participantsList');
+            
+            if (users.length === 0) {
+                listContainer.innerHTML = '<div class="px-3 py-2 text-gray-500 text-sm">Nenhum usuário encontrado</div>';
+                return;
+            }
+
+            listContainer.innerHTML = users.map(user => {
+                const isSelected = selectedParticipants.some(p => p.id === user.id);
+                
+                return `
+                    <div class="px-3 py-2 hover:bg-gray-100 cursor-pointer flex items-center justify-between ${isSelected ? 'bg-indigo-50' : ''}"
+                         onclick="toggleParticipant(${user.id}, '${user.username || user.name}')">
+                        <div>
+                            <div class="font-medium text-sm">${user.username || user.name}</div>
+                        </div>
+                        ${isSelected ? '<i class="fas fa-check text-indigo-600"></i>' : ''}
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Toggle participant selection
+        function toggleParticipant(id, username) {
+            const existingIndex = selectedParticipants.findIndex(p => p.id === id);
+            
+            if (existingIndex >= 0) {
+                // Remove participant
+                selectedParticipants.splice(existingIndex, 1);
+            } else {
+                // Add participant
+                selectedParticipants.push({ id, username });
+            }
+            
+            updateSelectedParticipantsDisplay();
+            renderParticipantsList();
+        }
+
+        // Update the display of selected participants
+        function updateSelectedParticipantsDisplay() {
+            const placeholder = document.getElementById('participantsPlaceholder');
+            const selectedContainer = document.getElementById('selectedParticipants');
+            
+            if (selectedParticipants.length === 0) {
+                placeholder.style.display = 'block';
+                selectedContainer.innerHTML = '';
+            } else {
+                placeholder.style.display = 'none';
+                selectedContainer.innerHTML = selectedParticipants.map(participant => `
+                    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
+                        ${participant.username}
+                        <button type="button" class="ml-1 text-indigo-600 hover:text-indigo-800" onclick="removeParticipant(${participant.id})">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </span>
+                `).join('');
+            }
+        }
+
+        // Remove participant
+        function removeParticipant(id) {
+            selectedParticipants = selectedParticipants.filter(p => p.id !== id);
+            updateSelectedParticipantsDisplay();
+            renderParticipantsList();
         }
 
         function addTimeSlot() {
@@ -596,6 +718,13 @@ $days_of_week = [
         document.addEventListener('DOMContentLoaded', function() {
             console.log('DOM loaded, starting initialization...');
             initializeCalendar();
+            
+            // Close dropdown when clicking outside
+            document.addEventListener('click', function(e) {
+                if (!e.target.closest('#participantsInput') && !e.target.closest('#participantsDropdown')) {
+                    closeParticipantsDropdown();
+                }
+            });
         });
 
         function initializeCalendar() {
