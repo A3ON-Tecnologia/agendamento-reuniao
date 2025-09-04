@@ -185,6 +185,9 @@ $days_of_week = [
                         <button onclick="showSpecificDateModal()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition duration-200 text-sm">
                             <i class="fas fa-calendar-plus mr-2"></i>Agendar Reunião
                         </button>
+                        <button onclick="showReportsModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition duration-200 text-sm">
+                            <i class="fas fa-chart-bar mr-2"></i>Relatórios
+                        </button>
                     </div>
                 </div>
             </div>
@@ -224,8 +227,95 @@ $days_of_week = [
 
     </div>
 
+    <!-- Reports Modal -->
+    <div id="reportsModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden overflow-y-auto h-full w-full z-50 flex items-center justify-center">
+        <div class="relative mx-auto p-5 border w-11/12 md:w-5/6 lg:w-4/5 shadow-lg rounded-md bg-white max-h-[90vh] overflow-y-auto">
+            <div class="mt-3">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-medium text-gray-900">Relatório de Reuniões</h3>
+                    <button onclick="hideReportsModal()" class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+                
+                <!-- Filter Section -->
+                <div class="mb-6 p-4 bg-gray-50 rounded-lg">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                        <!-- Status Filter -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Status:</label>
+                            <select id="statusFilter" onchange="applyFilters()" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <option value="all">Todas</option>
+                                <option value="future">Agendadas</option>
+                                <option value="happening">Em Andamento</option>
+                                <option value="past">Finalizadas</option>
+                            </select>
+                        </div>
+                        
+                        <!-- Specific Date Filter -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Data Específica:</label>
+                            <input type="date" id="specificDateFilter" onchange="applyFilters()" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        
+                        <!-- Participant Filter -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Participante:</label>
+                            <select id="participantFilter" onchange="applyFilters()" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <option value="all">Todos os participantes</option>
+                                <!-- Options will be populated by JavaScript -->
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center space-x-2">
+                            <span class="text-sm text-gray-600">Total:</span>
+                            <span id="totalMeetings" class="font-semibold text-blue-600">0</span>
+                        </div>
+                        <button onclick="clearAllFilters()" class="text-sm text-gray-500 hover:text-gray-700 underline">
+                            <i class="fas fa-times mr-1"></i>Limpar Filtros
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Meetings Table -->
+                <div class="overflow-x-auto">
+                    <table class="min-w-full bg-white border border-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Data</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Horário</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Assunto</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Participantes</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Descrição</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="meetingsTableBody" class="bg-white divide-y divide-gray-200">
+                            <!-- Meetings will be populated here -->
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- Loading State -->
+                <div id="reportsLoading" class="hidden text-center py-8">
+                    <i class="fas fa-spinner fa-spin text-2xl text-gray-400"></i>
+                    <p class="text-gray-500 mt-2">Carregando reuniões...</p>
+                </div>
+                
+                <!-- Empty State -->
+                <div id="reportsEmpty" class="hidden text-center py-8">
+                    <i class="fas fa-calendar-times text-4xl text-gray-300 mb-4"></i>
+                    <p class="text-gray-500">Nenhuma reunião encontrada</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Meeting Details/Edit Modal -->
-    <div id="meetingDetailsModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden overflow-y-auto h-full w-full z-50 flex items-center justify-center">
+    <div id="meetingDetailsModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden overflow-y-auto h-full w-full z-[60] flex items-center justify-center">
         <div class="relative mx-auto p-5 border w-11/12 md:w-3/4 lg:w-1/2 shadow-lg rounded-md bg-white max-h-[90vh] overflow-y-auto">
             <div class="mt-3">
                 <div class="flex justify-between items-center mb-4">
@@ -1830,6 +1920,242 @@ $days_of_week = [
             console.log('Initial force update of meeting colors...');
             reloadMeetingsOnCalendar();
         }, 2000);
+
+        // Reports Modal Functions
+        let allMeetingsData = [];
+
+        function showReportsModal() {
+            document.getElementById('reportsModal').classList.remove('hidden');
+            loadAllMeetings();
+            loadParticipants();
+        }
+
+        function hideReportsModal() {
+            document.getElementById('reportsModal').classList.add('hidden');
+        }
+
+        function loadAllMeetings() {
+            const loading = document.getElementById('reportsLoading');
+            const empty = document.getElementById('reportsEmpty');
+            const table = document.querySelector('.overflow-x-auto');
+            
+            loading.classList.remove('hidden');
+            empty.classList.add('hidden');
+            table.classList.add('hidden');
+
+            fetch('../api/get_all_meetings.php')
+                .then(response => response.json())
+                .then(data => {
+                    console.log('All meetings data:', data);
+                    if (data.success && data.meetings) {
+                        allMeetingsData = data.meetings;
+                        displayMeetingsInTable(allMeetingsData);
+                    } else {
+                        showEmptyState();
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading all meetings:', error);
+                    showEmptyState();
+                })
+                .finally(() => {
+                    loading.classList.add('hidden');
+                });
+        }
+
+        function displayMeetingsInTable(meetings) {
+            const tbody = document.getElementById('meetingsTableBody');
+            const table = document.querySelector('.overflow-x-auto');
+            const empty = document.getElementById('reportsEmpty');
+            
+            if (meetings.length === 0) {
+                showEmptyState();
+                return;
+            }
+
+            tbody.innerHTML = '';
+            table.classList.remove('hidden');
+            empty.classList.add('hidden');
+
+            meetings.forEach(meeting => {
+                const status = getMeetingStatus(meeting);
+                const statusInfo = getStatusInfo(status);
+                
+                const row = document.createElement('tr');
+                const statusColors = getStatusRowColors(status);
+                row.className = `hover:opacity-90 transition-opacity ${statusColors.bgClass} ${statusColors.borderClass}`;
+                
+                // Format date - fix timezone issue
+                const dateParts = meeting.data_reuniao.split('-');
+                const date = new Date(dateParts[0], dateParts[1] - 1, dateParts[2]); // Year, Month (0-based), Day
+                const formattedDate = date.toLocaleDateString('pt-BR');
+                
+                // Format participants
+                const participants = meeting.participantes ? meeting.participantes.split(',').map(p => p.trim()).join(', ') : 'Não informado';
+                
+                // Truncate description if too long
+                const description = meeting.descricao ? 
+                    (meeting.descricao.length > 50 ? meeting.descricao.substring(0, 50) + '...' : meeting.descricao) : 
+                    'Sem descrição';
+
+                row.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${formattedDate}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${meeting.hora_inicio} - ${meeting.hora_fim}</td>
+                    <td class="px-6 py-4 text-sm text-gray-900">${meeting.assunto}</td>
+                    <td class="px-6 py-4 text-sm text-gray-900">${participants}</td>
+                    <td class="px-6 py-4 text-sm text-gray-500" title="${meeting.descricao || 'Sem descrição'}">${description}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusInfo.bgColor} ${statusInfo.textColor}">
+                            <i class="${statusInfo.icon} mr-1"></i>
+                            ${statusInfo.label}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-center">
+                        <button onclick="viewMeetingFromReport(${meeting.id})" class="text-blue-600 hover:text-blue-800 transition-colors" title="Visualizar detalhes">
+                            <i class="fas fa-eye text-lg"></i>
+                        </button>
+                    </td>
+                `;
+                
+                tbody.appendChild(row);
+            });
+
+            updateTotalCount(meetings.length);
+        }
+
+        function getStatusInfo(status) {
+            switch(status) {
+                case 'happening':
+                    return {
+                        label: 'Em Andamento',
+                        bgColor: 'bg-green-100',
+                        textColor: 'text-green-800',
+                        icon: 'fas fa-play-circle'
+                    };
+                case 'past':
+                    return {
+                        label: 'Finalizada',
+                        bgColor: 'bg-red-100',
+                        textColor: 'text-red-800',
+                        icon: 'fas fa-check-circle'
+                    };
+                default: // future
+                    return {
+                        label: 'Agendada',
+                        bgColor: 'bg-orange-100',
+                        textColor: 'text-orange-800',
+                        icon: 'fas fa-clock'
+                    };
+            }
+        }
+
+        function loadParticipants() {
+            fetch('../api/get_participants.php')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success && data.participants) {
+                        const participantSelect = document.getElementById('participantFilter');
+                        
+                        // Clear existing options except the first one
+                        participantSelect.innerHTML = '<option value="all">Todos os participantes</option>';
+                        
+                        // Add participants to dropdown
+                        data.participants.forEach(participant => {
+                            const option = document.createElement('option');
+                            option.value = participant.nome;
+                            option.textContent = participant.nome;
+                            participantSelect.appendChild(option);
+                        });
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading participants:', error);
+                });
+        }
+
+        function applyFilters() {
+            const statusFilter = document.getElementById('statusFilter').value;
+            const specificDateFilter = document.getElementById('specificDateFilter').value;
+            const participantFilter = document.getElementById('participantFilter').value;
+            
+            let filteredMeetings = allMeetingsData.filter(meeting => {
+                // Status filter
+                if (statusFilter !== 'all') {
+                    const status = getMeetingStatus(meeting);
+                    if (status !== statusFilter) return false;
+                }
+                
+                // Specific date filter
+                if (specificDateFilter) {
+                    const meetingDate = meeting.data_reuniao;
+                    if (meetingDate !== specificDateFilter) return false;
+                }
+                
+                // Participant filter
+                if (participantFilter !== 'all') {
+                    const participants = meeting.participantes ? meeting.participantes : '';
+                    if (!participants.includes(participantFilter)) return false;
+                }
+                
+                return true;
+            });
+            
+            displayMeetingsInTable(filteredMeetings);
+        }
+
+        function clearAllFilters() {
+            document.getElementById('statusFilter').value = 'all';
+            document.getElementById('specificDateFilter').value = '';
+            document.getElementById('participantFilter').value = 'all';
+            displayMeetingsInTable(allMeetingsData);
+        }
+
+        // Keep old function for backward compatibility
+        function filterMeetings() {
+            applyFilters();
+        }
+
+        function updateTotalCount(count) {
+            document.getElementById('totalMeetings').textContent = count;
+        }
+
+        function getStatusRowColors(status) {
+            switch(status) {
+                case 'happening':
+                    return {
+                        bgClass: 'bg-green-50',
+                        borderClass: 'border-l-4 border-green-500'
+                    };
+                case 'past':
+                    return {
+                        bgClass: 'bg-red-50',
+                        borderClass: 'border-l-4 border-red-500'
+                    };
+                default: // future
+                    return {
+                        bgClass: 'bg-orange-50',
+                        borderClass: 'border-l-4 border-orange-500'
+                    };
+            }
+        }
+
+        function viewMeetingFromReport(meetingId) {
+            // Find the meeting data
+            const meeting = allMeetingsData.find(m => m.id == meetingId);
+            if (meeting) {
+                // Use the existing showMeetingDetails function
+                showMeetingDetails(meeting);
+            }
+        }
+
+        function showEmptyState() {
+            const table = document.querySelector('.overflow-x-auto');
+            const empty = document.getElementById('reportsEmpty');
+            
+            table.classList.add('hidden');
+            empty.classList.remove('hidden');
+            updateTotalCount(0);
+        }
     </script>
 </body>
 </html>
