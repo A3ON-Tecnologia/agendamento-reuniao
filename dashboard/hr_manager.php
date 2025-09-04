@@ -1728,6 +1728,7 @@ $days_of_week = [
         document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('editMeetingForm').addEventListener('submit', function(e) {
                 e.preventDefault();
+                console.log('🔄 Formulário de edição submetido');
                 
                 const meetingId = document.getElementById('editMeetingId').value;
                 const meetingDate = document.getElementById('editMeetingDate').value;
@@ -1737,13 +1738,22 @@ $days_of_week = [
                 const meetingDescription = document.getElementById('editMeetingDescription').value;
                 const meetingStatus = document.getElementById('editMeetingStatus').value;
                 
+                console.log('📝 Dados coletados:', {
+                    meetingId, meetingDate, meetingStartTime, meetingEndTime, 
+                    meetingSubject, meetingDescription, meetingStatus
+                });
+                
+                // Validate required fields
+                if (!meetingId || !meetingDate || !meetingStartTime || !meetingEndTime || !meetingSubject) {
+                    showToast('Por favor, preencha todos os campos obrigatórios.', 'warning');
+                    return;
+                }
+                
                 // Validate time range
                 if (meetingStartTime >= meetingEndTime) {
                     showToast('A hora de início deve ser anterior à hora de fim.', 'warning');
                     return;
                 }
-                
-                // Note: Participants validation removed to allow editing subject/description only
                 
                 // Prepare meeting data for API
                 const meetingData = {
@@ -1754,8 +1764,16 @@ $days_of_week = [
                     subject: meetingSubject,
                     description: meetingDescription,
                     status: meetingStatus,
-                    participants: editSelectedParticipants
+                    participants: editSelectedParticipants || []
                 };
+                
+                console.log('📤 Enviando dados para API:', meetingData);
+                
+                // Show loading state
+                const submitButton = e.target.querySelector('button[type="submit"]');
+                const originalText = submitButton.innerHTML;
+                submitButton.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Salvando...';
+                submitButton.disabled = true;
                 
                 // Send to API
                 fetch('../api/update_meeting.php', {
@@ -1765,26 +1783,40 @@ $days_of_week = [
                     },
                     body: JSON.stringify(meetingData)
                 })
-                .then(response => response.json())
+                .then(response => {
+                    console.log('📥 Resposta recebida:', response.status);
+                    return response.json();
+                })
                 .then(data => {
+                    console.log('📊 Dados da resposta:', data);
+                    
+                    // Restore button state
+                    submitButton.innerHTML = originalText;
+                    submitButton.disabled = false;
+                    
                     if (data.success) {
                         hideMeetingDetailsModal();
-                        // Clear form
-                        document.getElementById('meetingForm').reset();
+                        // Clear form - CORRIGIDO: usar editMeetingForm ao invés de meetingForm
+                        document.getElementById('editMeetingForm').reset();
                         editSelectedParticipants = [];
                         updateEditSelectedParticipantsDisplay();
                         // Hide error message if visible
                         hideMeetingError();
-                        // Reload calendar to show new meeting
+                        // Reload calendar to show updated meeting
                         reloadMeetingsOnCalendar();
                         showToast('Reunião atualizada com sucesso!', 'success');
                     } else {
-                        showMeetingError(data.message);
+                        showMeetingError(data.message || 'Erro desconhecido ao atualizar reunião');
                     }
                 })
                 .catch(error => {
-                    console.error('Error:', error);
-                    showToast('Erro ao atualizar reunião. Tente novamente.', 'error');
+                    console.error('❌ Erro na requisição:', error);
+                    
+                    // Restore button state
+                    submitButton.innerHTML = originalText;
+                    submitButton.disabled = false;
+                    
+                    showToast('Erro ao atualizar reunião. Verifique sua conexão e tente novamente.', 'error');
                 });
             });
         });
