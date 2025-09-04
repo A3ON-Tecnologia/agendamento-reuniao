@@ -1,25 +1,23 @@
 <?php
+session_start();
 require_once '../config/database.php';
 require_once '../classes/User.php';
-require_once '../classes/Appointment.php';
-require_once '../classes/AvailabilitySlot.php';
+require_once '../classes/Meeting.php';
 
-// Mock user info for direct access
-$user_info = [
-    'id' => 1,
-    'name' => 'Gestor RH',
-    'email' => 'hr@empresa.com',
-    'role' => 'hr_manager'
-];
+// Simular usuário HR Manager para acesso direto
+if (!isset($_SESSION['user_info'])) {
+    $_SESSION['user_info'] = [
+        'id' => 1,
+        'name' => 'HR Manager',
+        'role' => 'hr_manager'
+    ];
+}
+
+$user_info = $_SESSION['user_info'];
 
 $database = new Database();
 $db = $database->getConnection();
-$appointment = new Appointment($db);
-$availability = new AvailabilitySlot($db);
-
-// Get appointments for this HR manager
-$appointments = $appointment->getAppointmentsByHRManager($user_info['id']);
-$availability_slots = $availability->getAvailabilityByHRManager($user_info['id']);
+$meeting = new Meeting($db);
 
 $days_of_week = [
     0 => 'Domingo',
@@ -189,13 +187,14 @@ $days_of_week = [
                         <!-- Status -->
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">Status</label>
-                            <select id="editMeetingStatus" name="status" 
-                                    class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                            <select id="editMeetingStatus" name="status" disabled
+                                    class="w-full border border-gray-300 rounded-md px-3 py-2 bg-gray-100 text-gray-600 cursor-not-allowed">
                                 <option value="agendada">Agendada</option>
-                                <option value="em_andamento">Em Andamento</option>
-                                <option value="concluida">Concluída</option>
+                                <option value="em_andamento">Em andamento</option>
+                                <option value="concluida">Finalizada</option>
                                 <option value="cancelada">Cancelada</option>
                             </select>
+                            <p class="text-xs text-gray-500 mt-1">O status é calculado automaticamente baseado no horário da reunião</p>
                         </div>
                     </div>
 
@@ -1135,7 +1134,7 @@ $days_of_week = [
                     
                     const eventElement = document.createElement('div');
                     eventElement.className = `w-6 h-6 ${dotColor} ${hoverColor} rounded-full cursor-pointer transition-colors`;
-                    eventElement.title = `${meeting.assunto}\n${meeting.hora_inicio.substring(0,5)} - ${meeting.hora_fim.substring(0,5)}\nStatus: ${status === 'happening' ? 'Acontecendo agora' : status === 'past' ? 'Finalizada' : 'Agendada'}`;
+                    eventElement.title = `${meeting.assunto}\n${meeting.hora_inicio.substring(0,5)} - ${meeting.hora_fim.substring(0,5)}\nStatus: ${status === 'happening' ? 'Em andamento' : status === 'past' ? 'Finalizada' : 'Agendada'}`;
                     eventElement.dataset.meetingId = meeting.id;
                     
                     // Add click event to show meeting details
@@ -1152,6 +1151,21 @@ $days_of_week = [
         }
 
         function showMeetingDetails(meeting) {
+            // Calculate dynamic status based on current time
+            const dynamicStatus = getMeetingStatus(meeting);
+            let statusValue;
+            
+            switch(dynamicStatus) {
+                case 'happening':
+                    statusValue = 'em_andamento';
+                    break;
+                case 'past':
+                    statusValue = 'concluida';
+                    break;
+                default: // future
+                    statusValue = 'agendada';
+            }
+            
             // Populate the edit form with meeting data
             document.getElementById('editMeetingId').value = meeting.id;
             document.getElementById('editMeetingDate').value = meeting.data_reuniao;
@@ -1159,7 +1173,7 @@ $days_of_week = [
             document.getElementById('editMeetingEndTime').value = meeting.hora_fim;
             document.getElementById('editMeetingSubject').value = meeting.assunto;
             document.getElementById('editMeetingDescription').value = meeting.descricao || '';
-            document.getElementById('editMeetingStatus').value = meeting.status;
+            document.getElementById('editMeetingStatus').value = statusValue;
             
             // Load meeting participants
             loadMeetingParticipants(meeting.id);
@@ -1338,11 +1352,7 @@ $days_of_week = [
                     return;
                 }
                 
-                // Validate participants
-                if (editSelectedParticipants.length === 0) {
-                    showToast('Selecione pelo menos um participante.', 'warning');
-                    return;
-                }
+                // Note: Participants validation removed to allow editing subject/description only
                 
                 // Prepare meeting data for API
                 const meetingData = {

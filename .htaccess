@@ -1,10 +1,14 @@
 RewriteEngine On
 
-# Force redirect to dashboard for any root access
-RewriteRule ^/?$ /dashboard/hr_manager.php [L,R=301]
-
-# Redirect index.php specifically
-RewriteRule ^index\.php$ /dashboard/hr_manager.php [L,R=301]
-
-# Alternative rule for different server configs
+# Set hr_manager.php as the default page
 DirectoryIndex dashboard/hr_manager.php
+
+# Redirect root access directly to hr_manager.php (internal redirect)
+RewriteRule ^/?$ dashboard/hr_manager.php [L]
+
+# Redirect index.php to hr_manager.php (internal redirect)
+RewriteRule ^index\.php$ dashboard/hr_manager.php [L]
+
+# Prevent access to index.php entirely
+RewriteCond %{THE_REQUEST} \s/+index\.php[\s?] [NC]
+RewriteRule ^index\.php$ dashboard/hr_manager.php [R=301,L]

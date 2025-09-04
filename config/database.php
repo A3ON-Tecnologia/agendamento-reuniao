@@ -1,7 +1,7 @@
 <?php
 class Database {
     private $host = 'localhost';
-    private $db_name = 'agendamento_reunioes';
+    private $db_name = 'cadastro_empresas';
     private $username = 'root';
     private $password = '';
     private $conn;

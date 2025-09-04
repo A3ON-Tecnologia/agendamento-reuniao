@@ -1,14 +1,9 @@
 <?php
-// Force redirect to dashboard - bypass any caching or server config issues
-if (!headers_sent()) {
-    header('Location: dashboard/hr_manager.php', true, 301);
-    exit();
-}
+session_start();
+// Redirect to dashboard immediately
+header('Location: dashboard/hr_manager.php');
+exit();
 ?>
-<script>
-// Fallback JavaScript redirect if PHP headers fail
-window.location.replace('dashboard/hr_manager.php');
-</script>
 
 <!DOCTYPE html>
 <html lang="pt-BR">

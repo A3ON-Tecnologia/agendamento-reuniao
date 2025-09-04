@@ -1,5 +1,5 @@
 <?php
-require_once '../config/users_database.php';
+// require_once '../config/database.php'; // Removido para evitar conflito quando chamado de diferentes diretórios
 
 class Meeting {
     private $conn;

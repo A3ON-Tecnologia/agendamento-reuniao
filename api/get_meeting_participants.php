@@ -4,7 +4,7 @@ header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: GET');
 header('Access-Control-Allow-Headers: Content-Type');
 
-require_once '../config/users_database.php';
+require_once '../config/database.php';
 require_once '../classes/Meeting.php';
 
 // Verificar se é uma requisição GET
@@ -23,8 +23,8 @@ if (!isset($_GET['meeting_id']) || empty($_GET['meeting_id'])) {
 
 try {
     // Conectar ao banco
-    $usersDb = new UsersDatabase();
-    $db = $usersDb->getConnection();
+    $database = new Database();
+    $db = $database->getConnection();
     $meeting = new Meeting($db);
     
     // Buscar participantes da reunião
