@@ -52,6 +52,107 @@ $days_of_week = [
         }
     </script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        /* Custom tooltip styles */
+        .custom-tooltip {
+            position: fixed;
+            background: white;
+            border-radius: 8px;
+            padding: 12px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+            z-index: 9999;
+            font-size: 13px;
+            line-height: 1.4;
+            max-width: 250px;
+            width: 250px;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-5px);
+            transition: all 0.2s ease-in-out;
+            pointer-events: none;
+            border-left: 4px solid;
+            display: none;
+        }
+        
+        .custom-tooltip.show {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+            display: block !important;
+        }
+        
+        .custom-tooltip.status-happening {
+            border-left-color: #10b981; /* green-500 */
+            background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+        }
+        
+        .custom-tooltip.status-past {
+            border-left-color: #ef4444; /* red-500 */
+            background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+        }
+        
+        .custom-tooltip.status-future {
+            border-left-color: #f97316; /* orange-500 */
+            background: linear-gradient(135deg, #fff7ed 0%, #fed7aa 100%);
+        }
+        
+        .custom-tooltip .tooltip-title {
+            font-weight: 600;
+            margin-bottom: 6px;
+            color: #1f2937;
+        }
+        
+        .custom-tooltip .tooltip-time {
+            color: #6b7280;
+            margin-bottom: 4px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .custom-tooltip .tooltip-status {
+            font-size: 12px;
+            font-weight: 500;
+            padding: 2px 8px;
+            border-radius: 12px;
+            display: inline-block;
+            margin-top: 4px;
+        }
+        
+        .custom-tooltip.status-happening .tooltip-status {
+            background: #10b981;
+            color: white;
+        }
+        
+        .custom-tooltip.status-past .tooltip-status {
+            background: #ef4444;
+            color: white;
+        }
+        
+        .custom-tooltip.status-future .tooltip-status {
+            background: #f97316;
+            color: white;
+        }
+        
+        /* Pulsing animation for meetings in progress */
+        @keyframes pulse {
+            0% {
+                transform: scale(1);
+                opacity: 1;
+            }
+            50% {
+                transform: scale(1.2);
+                opacity: 0.7;
+            }
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+        
+        .meeting-happening {
+            animation: pulse 2s infinite;
+        }
+    </style>
 </head>
 <body class="bg-gray-50 min-h-screen">
     <div class="max-w-full h-screen flex flex-col">
@@ -59,9 +160,27 @@ $days_of_week = [
         <div class="bg-white shadow rounded-lg flex-1 flex flex-col">
             <div class="px-6 py-4 border-b border-gray-200">
                 <div class="flex justify-between items-center">
-                    <h3 class="text-lg font-medium text-gray-900">
-                        <i class="fas fa-calendar-alt mr-2"></i>Calendário de Agendamentos
-                    </h3>
+                    <div class="flex items-center space-x-6">
+                        <h3 class="text-lg font-medium text-gray-900">
+                            <i class="fas fa-calendar-alt mr-2"></i>Calendário de Agendamentos
+                        </h3>
+                        
+                        <!-- Status Legend -->
+                        <div class="flex items-center space-x-4 text-sm">
+                            <div class="flex items-center space-x-1">
+                                <div class="w-3 h-3 bg-green-500 rounded-full"></div>
+                                <span class="text-gray-600">Em andamento</span>
+                            </div>
+                            <div class="flex items-center space-x-1">
+                                <div class="w-3 h-3 bg-red-500 rounded-full"></div>
+                                <span class="text-gray-600">Finalizada</span>
+                            </div>
+                            <div class="flex items-center space-x-1">
+                                <div class="w-3 h-3 bg-orange-500 rounded-full"></div>
+                                <span class="text-gray-600">Agendada</span>
+                            </div>
+                        </div>
+                    </div>
                     <div class="flex space-x-2">
                         <button onclick="showSpecificDateModal()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition duration-200 text-sm">
                             <i class="fas fa-calendar-plus mr-2"></i>Agendar Reunião
@@ -448,6 +567,16 @@ $days_of_week = [
         <!-- Toast notifications will be inserted here -->
     </div>
 
+    <!-- Custom Tooltip Container -->
+    <div id="customTooltip" class="custom-tooltip">
+        <div class="tooltip-title"></div>
+        <div class="tooltip-time">
+            <i class="fas fa-clock mr-1"></i>
+            <span></span>
+        </div>
+        <div class="tooltip-status"></div>
+    </div>
+
     <script>
         // Toast notification system
         function showToast(message, type = 'success') {
@@ -525,6 +654,105 @@ $days_of_week = [
                     toast.parentElement.removeChild(toast);
                 }
             }, 300);
+        }
+
+        // Custom tooltip functions
+        function showCustomTooltip(event, meeting, status) {
+            console.log('showCustomTooltip called with:', meeting.assunto, status);
+            
+            // Remove any existing tooltip first
+            hideCustomTooltip();
+            
+            // Create tooltip dynamically
+            const tooltip = document.createElement('div');
+            tooltip.id = 'activeTooltip';
+            tooltip.style.cssText = `
+                position: fixed;
+                background: white;
+                border-radius: 8px;
+                padding: 12px;
+                box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+                z-index: 99999;
+                font-size: 13px;
+                line-height: 1.4;
+                width: 250px;
+                border-left: 4px solid;
+                font-family: Inter, sans-serif;
+            `;
+            
+            // Set status-specific styling
+            let statusText, borderColor, bgGradient;
+            switch(status) {
+                case 'happening':
+                    statusText = 'Em andamento';
+                    borderColor = '#10b981';
+                    bgGradient = 'linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%)';
+                    break;
+                case 'past':
+                    statusText = 'Finalizada';
+                    borderColor = '#ef4444';
+                    bgGradient = 'linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%)';
+                    break;
+                default:
+                    statusText = 'Agendada';
+                    borderColor = '#f97316';
+                    bgGradient = 'linear-gradient(135deg, #fff7ed 0%, #fed7aa 100%)';
+            }
+            
+            tooltip.style.borderLeftColor = borderColor;
+            tooltip.style.background = bgGradient;
+            
+            // Set tooltip content
+            tooltip.innerHTML = `
+                <div style="font-weight: 600; margin-bottom: 6px; color: #1f2937;">${meeting.assunto}</div>
+                <div style="color: #6b7280; margin-bottom: 4px; display: flex; align-items: center;">
+                    <i class="fas fa-clock" style="margin-right: 4px;"></i>
+                    <span>${meeting.hora_inicio.substring(0,5)} - ${meeting.hora_fim.substring(0,5)}</span>
+                </div>
+                <div style="font-size: 12px; font-weight: 500; padding: 2px 8px; border-radius: 12px; display: inline-block; margin-top: 4px; background: ${borderColor}; color: white;">
+                    ${statusText}
+                </div>
+            `;
+            
+            // Position tooltip
+            const rect = event.target.getBoundingClientRect();
+            let left = rect.left + (rect.width / 2) - 125;
+            let top = rect.bottom + 10;
+            
+            // Adjust if tooltip goes off screen
+            if (left < 10) left = 10;
+            if (left + 250 > window.innerWidth - 10) {
+                left = window.innerWidth - 260;
+            }
+            if (top + 80 > window.innerHeight - 10) {
+                top = rect.top - 90;
+                if (top < 10) top = rect.bottom + 10;
+            }
+            
+            tooltip.style.left = left + 'px';
+            tooltip.style.top = top + 'px';
+            
+            // Add to body
+            document.body.appendChild(tooltip);
+            
+            console.log('Dynamic tooltip created and positioned at:', left, top);
+        }
+        
+        function hideCustomTooltip() {
+            // Remove static tooltip
+            const tooltip = document.getElementById('customTooltip');
+            if (tooltip) {
+                tooltip.classList.remove('show');
+                tooltip.style.display = 'none';
+                tooltip.style.visibility = 'hidden';
+                tooltip.style.opacity = '0';
+            }
+            
+            // Remove dynamic tooltip
+            const activeTooltip = document.getElementById('activeTooltip');
+            if (activeTooltip) {
+                activeTooltip.remove();
+            }
         }
 
         function showAvailabilityModal() {
@@ -1085,13 +1313,25 @@ $days_of_week = [
             const now = new Date();
             const meetingDate = new Date(meeting.data_reuniao + 'T' + meeting.hora_inicio);
             const meetingEndDate = new Date(meeting.data_reuniao + 'T' + meeting.hora_fim);
-            const fiveMinutesAfterEnd = new Date(meetingEndDate.getTime() + 5 * 60 * 1000);
+            const oneMinuteAfterEnd = new Date(meetingEndDate.getTime() + 1 * 60 * 1000); // 1 minuto após o fim
             
-            if (now >= meetingDate && now <= meetingEndDate) {
+            console.log('Checking meeting status for:', meeting.assunto);
+            console.log('Current time:', now.toLocaleString('pt-BR'));
+            console.log('Meeting start:', meetingDate.toLocaleString('pt-BR'));
+            console.log('Meeting end:', meetingEndDate.toLocaleString('pt-BR'));
+            console.log('1 minute after end:', oneMinuteAfterEnd.toLocaleString('pt-BR'));
+            
+            if (now >= meetingDate && now < meetingEndDate) {
+                console.log('Status: happening (em andamento)');
                 return 'happening'; // Verde - acontecendo agora
-            } else if (now > fiveMinutesAfterEnd) {
-                return 'past'; // Vermelho - já aconteceu (5+ min após o fim)
+            } else if (now >= meetingEndDate && now <= oneMinuteAfterEnd) {
+                console.log('Status: happening (ainda em andamento até o fim exato)');
+                return 'happening'; // Verde - ainda em andamento até o minuto exato do fim
+            } else if (now > oneMinuteAfterEnd) {
+                console.log('Status: past (finalizada)');
+                return 'past'; // Vermelho - finalizada (1+ min após o fim)
             } else {
+                console.log('Status: future (agendada)');
                 return 'future'; // Laranja - futuro
             }
         }
@@ -1133,13 +1373,31 @@ $days_of_week = [
                     }
                     
                     const eventElement = document.createElement('div');
-                    eventElement.className = `w-6 h-6 ${dotColor} ${hoverColor} rounded-full cursor-pointer transition-colors`;
-                    eventElement.title = `${meeting.assunto}\n${meeting.hora_inicio.substring(0,5)} - ${meeting.hora_fim.substring(0,5)}\nStatus: ${status === 'happening' ? 'Em andamento' : status === 'past' ? 'Finalizada' : 'Agendada'}`;
+                    let className = `w-6 h-6 ${dotColor} ${hoverColor} rounded-full cursor-pointer transition-colors`;
+                    
+                    // Add pulsing animation for meetings in progress
+                    if (status === 'happening') {
+                        className += ' meeting-happening';
+                    }
+                    
+                    eventElement.className = className;
                     eventElement.dataset.meetingId = meeting.id;
+                    
+                    // Add custom tooltip events
+                    eventElement.addEventListener('mouseenter', (e) => {
+                        console.log('Mouse enter event triggered', meeting.assunto);
+                        showCustomTooltip(e, meeting, status);
+                    });
+                    
+                    eventElement.addEventListener('mouseleave', () => {
+                        console.log('Mouse leave event triggered');
+                        hideCustomTooltip();
+                    });
                     
                     // Add click event to show meeting details
                     eventElement.addEventListener('click', (e) => {
                         e.stopPropagation();
+                        hideCustomTooltip(); // Hide tooltip when clicking
                         showMeetingDetails(meeting);
                     });
                     
@@ -1174,6 +1432,49 @@ $days_of_week = [
             document.getElementById('editMeetingSubject').value = meeting.assunto;
             document.getElementById('editMeetingDescription').value = meeting.descricao || '';
             document.getElementById('editMeetingStatus').value = statusValue;
+            
+            // Check if meeting is finished (past) and disable fields accordingly
+            const isFinished = statusValue === 'concluida';
+            
+            // Disable all fields except description if meeting is finished
+            document.getElementById('editMeetingDate').disabled = isFinished;
+            document.getElementById('editMeetingStartTime').disabled = isFinished;
+            document.getElementById('editMeetingEndTime').disabled = isFinished;
+            document.getElementById('editMeetingSubject').disabled = isFinished;
+            document.getElementById('editMeetingDescription').disabled = false; // Always editable
+            
+            // Disable participants dropdown if meeting is finished
+            const participantsInput = document.getElementById('editParticipantsInput');
+            if (isFinished) {
+                participantsInput.style.pointerEvents = 'none';
+                participantsInput.style.opacity = '0.6';
+                participantsInput.style.cursor = 'not-allowed';
+            } else {
+                participantsInput.style.pointerEvents = 'auto';
+                participantsInput.style.opacity = '1';
+                participantsInput.style.cursor = 'pointer';
+            }
+            
+            // Update field styles for disabled state
+            const fieldsToStyle = ['editMeetingDate', 'editMeetingStartTime', 'editMeetingEndTime', 'editMeetingSubject'];
+            fieldsToStyle.forEach(fieldId => {
+                const field = document.getElementById(fieldId);
+                if (isFinished) {
+                    field.classList.add('bg-gray-100', 'text-gray-600', 'cursor-not-allowed');
+                    field.classList.remove('focus:ring-2', 'focus:ring-indigo-500');
+                } else {
+                    field.classList.remove('bg-gray-100', 'text-gray-600', 'cursor-not-allowed');
+                    field.classList.add('focus:ring-2', 'focus:ring-indigo-500');
+                }
+            });
+            
+            // Update modal title to indicate if meeting is finished
+            const modalTitle = document.querySelector('#meetingDetailsModal h3');
+            if (isFinished) {
+                modalTitle.innerHTML = '<i class="fas fa-check-circle text-green-600 mr-2"></i>Reunião Finalizada - Apenas Descrição Editável';
+            } else {
+                modalTitle.textContent = 'Detalhes da Reunião';
+            }
             
             // Load meeting participants
             loadMeetingParticipants(meeting.id);
@@ -1518,11 +1819,17 @@ $days_of_week = [
             loadMonthAppointments(currentDate.getFullYear(), currentDate.getMonth());
         }
 
-        // Auto-update meeting colors every minute
+        // Auto-update meeting colors every 30 seconds
         setInterval(() => {
             console.log('Auto-updating meeting colors...');
             reloadMeetingsOnCalendar();
-        }, 60000); // Update every 60 seconds
+        }, 30000); // Update every 30 seconds
+        
+        // Force update on page load after 2 seconds
+        setTimeout(() => {
+            console.log('Initial force update of meeting colors...');
+            reloadMeetingsOnCalendar();
+        }, 2000);
     </script>
 </body>
 </html>
